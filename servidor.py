@@ -3,12 +3,25 @@ import psycopg2
 from psycopg2 import sql
 import os
 from flask_sqlalchemy import SQLAlchemy
+import os
+
+ENV = os.environ.get('ENV')
 
 
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+if ENV == "production":
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+else:    
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Set up database connection details
+if ENV == "production":
+    DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia')
+else:
+    DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
+#engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
 
 db = SQLAlchemy(app)
 
@@ -61,10 +74,7 @@ class Cuenta(db.Model):
     fk_tipo_cuenta = db.Column(db.Integer, db.ForeignKey("tipo_cuenta.id"), nullable=True)
     congelada = db.Column(db.Integer, nullable=True)  # Consider changing to Boolean if appropriate
 
-# Set up database connection details
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://iclarpro:2015@localhost/arcadia')
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
-#engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
+
 
 
 def get_db_connection():
