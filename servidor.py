@@ -26,12 +26,12 @@ else:
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 #engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
-# if ENV == "production":
-#     engine = create_engine("postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia")
-#     connection = engine.connect()
-# else:
-#     engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
-#     connection = engine.connect()
+if ENV == "production":
+    engine = create_engine("postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia")
+    connection = engine.connect()
+else:
+    engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
+    connection = engine.connect()
 
 db = SQLAlchemy(app)
 
