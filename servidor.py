@@ -26,12 +26,12 @@ else:
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 #engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
-if ENV == "production":
-    engine = create_engine('postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia')
-    connection = engine.connect()
-else:
-    engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
-    connection = engine.connect()
+# if ENV == "production":
+#     engine = create_engine("postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia")
+#     connection = engine.connect()
+# else:
+#     engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
+#     connection = engine.connect()
 
 db = SQLAlchemy(app)
 
@@ -89,8 +89,8 @@ class Cuenta(db.Model):
 
 @app.route('/clientes', methods=['GET'])
 def get_clientes():
-    query = text("SELECT distinct(c.codigo), c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2, c.codigo  FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente join inmueble i on cc.fk_inmueble=i.codigo where saldo>0")
-    clientes = connection.execute(query)
+    result = db.session.execute(text("SELECT distinct(c.codigo), c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2, c.codigo  FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente join inmueble i on cc.fk_inmueble=i.codigo where saldo>0"))
+    clientes = result.fetchall()
 
     # Convert list of tuples to a list of dictionaries
     clientes_list = [{"id":cliente[0], "cuenta": cliente[0], "nombre": cliente[1], "rfc": cliente[2], "saldo":cliente[3], "manzana":cliente[4], "lote":cliente[5], "cliente":cliente[6]} for cliente in clientes]
