@@ -1,15 +1,24 @@
 from flask import Flask, jsonify, request
-import psycopg2
-from psycopg2 import sql
 import os
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy
+from sqlalchemy import create_engine
 import os
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
+from sqlalchemy import text
+
+connection = None
+
 
 ENV = os.environ.get('ENV')
+
+#engine = create_engine('postgresql://user:password@host/database')
+#metadata.create_all(engine)
 
 
 
 app = Flask(__name__)
+
 if ENV == "production":
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -22,6 +31,12 @@ if ENV == "production":
 else:
     DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
 #engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
+if ENV == "production":
+    engine = create_engine('postgresql://arcadia:pinares2024$@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com/arcadia')
+    connection = engine.connect()
+else:
+    engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
+    connection = engine.connect()
 
 db = SQLAlchemy(app)
 
@@ -77,46 +92,10 @@ class Cuenta(db.Model):
 
 
 
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
-
-@app.route('/sabe2', methods=['GET'])
-def prueba():
-    return jsonify({})
-
-@app.route('/jaja', methods=['GET'])
-def lala():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM cliente;")
-    clientes = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    # Convert list of tuples to a list of dictionaries
-    clientes_list = [{"id": cliente[0], "name": cliente[1], "email": cliente[2]} for cliente in clientes]
-
-    return jsonify(clientes_list)
-
-@app.route('/sabe', methods=['GET'])
-def lalala():
-    clientes = []
-    clienteq = Cliente.query.all()
-    cuentaq = Cuenta.query.all()
-    for x in clienteq:
-        clientes.append(dict(codigo=x.codigo, nombre=x.nombre, rfc=x.rfc))
-    return jsonify(clientes)
-
-
 @app.route('/clientes', methods=['GET'])
 def get_clientes():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT distinct(c.codigo), c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2, c.codigo  FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente join inmueble i on cc.fk_inmueble=i.codigo where saldo>0")
-    clientes = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    query = text("SELECT distinct(c.codigo), c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2, c.codigo  FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente join inmueble i on cc.fk_inmueble=i.codigo where saldo>0")
+    clientes = connection.execute(query)
 
     # Convert list of tuples to a list of dictionaries
     clientes_list = [{"id":cliente[0], "cuenta": cliente[0], "nombre": cliente[1], "rfc": cliente[2], "saldo":cliente[3], "manzana":cliente[4], "lote":cliente[5], "cliente":cliente[6]} for cliente in clientes]
@@ -128,17 +107,8 @@ def get_clientes():
 
 @app.route('/clientes/<int:id>', methods=['GET'])
 def get_cliente(id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM cliente WHERE codigo ={id}")
-    cliente = cursor.fetchone()
-    cursor.close()
-    conn.close()
     user = Cliente.query.get(id)
-    print("eje")
-    print(user)
-
-    if cliente is None:
+    if not user:
         return jsonify({"error": "Cliente not found"}), 404
 
     response  =jsonify(user.as_dict())
@@ -154,18 +124,19 @@ def add_cliente():
     if not new_cliente or not new_cliente.get('name') or not new_cliente.get('email'):
         return jsonify({"error": "Missing data"}), 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO clientes (name, email) VALUES (%s, %s) RETURNING id;",
-        (new_cliente['name'], new_cliente['email'])
-    )
-    new_id = cursor.fetchone()[0]
-    conn.commit()
-    cursor.close()
-    conn.close()
+    # conn = get_db_connection()
+    # cursor = conn.cursor()
+    # cursor.execute(
+    #     "INSERT INTO clientes (name, email) VALUES (%s, %s) RETURNING id;",
+    #     (new_cliente['name'], new_cliente['email'])
+    # )
+    # new_id = cursor.fetchone()[0]
+    # conn.commit()
+    # cursor.close()
+    # conn.close()
 
-    return jsonify({"id": new_id, "name": new_cliente['name'], "email": new_cliente['email']}), 201
+    #return jsonify({"id": new_id, "name": new_cliente['name'], "email": new_cliente['email']}), 201
+    return jsonify({})
 
 
 if __name__ == '__main__':
