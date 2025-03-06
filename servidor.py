@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 import os
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy import text
+from flask_cors import CORS
+
 
 connection = None
 #jaja
@@ -35,6 +37,8 @@ else:
     connection = engine.connect()
 
 db = SQLAlchemy(app)
+
+CORS(app)
 
 
 class Cliente(db.Model):
@@ -96,9 +100,9 @@ def get_clientes():
     # Convert list of tuples to a list of dictionaries
     clientes_list = [{"id":cliente[0], "cuenta": cliente[0], "nombre": cliente[1], "rfc": cliente[2], "saldo":cliente[3], "manzana":cliente[4], "lote":cliente[5], "cliente":cliente[6]} for cliente in clientes]
     response  =jsonify(clientes_list)
-    response.headers.add("Access-Control-Allow-Origin", "*")  # Allow all origins
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+    # response.headers.add("Access-Control-Allow-Origin", "*")  # Allow all origins
+    # response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    # response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
     return response
 
 @app.route('/api/clientes/<int:id>', methods=['GET'])
@@ -108,9 +112,9 @@ def get_cliente(id):
         return jsonify({"error": "Cliente not found"}), 404
 
     response  =jsonify(user.as_dict())
-    response.headers.add("Access-Control-Allow-Origin", "*")  # Allow all origins
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+    # response.headers.add("Access-Control-Allow-Origin", "*")  # Allow all origins
+    # response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    # response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
     return response
 
 @app.route('/api/clientes', methods=['POST'])
