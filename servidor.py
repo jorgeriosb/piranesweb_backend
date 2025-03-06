@@ -8,6 +8,7 @@ from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy import text
 
 connection = None
+#jaja
 
 
 ENV = os.environ.get('ENV')
