@@ -88,7 +88,7 @@ class Cuenta(db.Model):
 
 
 
-@app.route('/clientes', methods=['GET'])
+@app.route('/api/clientes', methods=['GET'])
 def get_clientes():
     result = db.session.execute(text("SELECT distinct(c.codigo), c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2, c.codigo  FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente join inmueble i on cc.fk_inmueble=i.codigo where saldo>0"))
     clientes = result.fetchall()
@@ -101,7 +101,7 @@ def get_clientes():
     response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
     return response
 
-@app.route('/clientes/<int:id>', methods=['GET'])
+@app.route('/api/clientes/<int:id>', methods=['GET'])
 def get_cliente(id):
     user = Cliente.query.get(id)
     if not user:
@@ -113,7 +113,7 @@ def get_cliente(id):
     response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
     return response
 
-@app.route('/clientes', methods=['POST'])
+@app.route('/api/clientes', methods=['POST'])
 def add_cliente():
     new_cliente = request.get_json()
 
