@@ -160,6 +160,20 @@ class Documento(db.Model):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
     
+class Movimiento(db.Model):
+    __tablename__ = 'movimiento'
+    
+    codigo = db.Column(db.Integer, primary_key=True)
+    cantidad = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.Date, nullable=False)
+    relaciondepago = db.Column(db.String, nullable=True)
+    cargoabono = db.Column(db.String(1), nullable=False)
+    fechavencimientodoc = db.Column(db.Date, nullable=True)
+    fk_documento = db.Column(db.Integer, nullable=False)
+    fk_tipo = db.Column(db.Integer, nullable=False)
+    numrecibo = db.Column(db.Integer, nullable=True)
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 # aqui arriba estan los modelos
 
@@ -260,6 +274,21 @@ def inmueble_id(id):
     if not inmueble:
         return jsonify({"error": "inmueble not found"}), 404
     response  =jsonify(inmueble.as_dict())
+    return response
+
+
+@app.route('/api/documento/<int:id>/movimientos', methods=['GET'])
+@jwt_required()
+def get_documento_movimientos(id):
+    movimientos = db.session.execute(db.select(Movimiento).filter_by(fk_documento=id)).scalars()
+    if not movimientos:
+        return jsonify({"error": "Movimientos not found"}), 404
+    response  =[x.as_dict() for x in movimientos]
+    response = jsonify(list(map(lambda x:{"id":x["codigo"], 
+                "cantidad":x["cantidad"], "fecha":x["fecha"], 
+                "cargoabono":x["cargoabono"],
+                "fechavencimientodoc":x["fechavencimientodoc"], 
+                "numrecibo":x["numrecibo"]}, response)))
     return response
 
 
