@@ -1,4 +1,5 @@
 from pydoc import Doc
+from xml.dom.minidom import Document
 from flask import Flask, jsonify, request
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -260,7 +261,7 @@ def cuenta_id(id):
 @app.route('/api/cuenta/<int:id>/documentos', methods=['GET'])
 @jwt_required()
 def cuenta_id_documentos(id):
-    documentos = db.session.execute(db.select(Documento).filter_by(fk_cuenta=id)).scalars()
+    documentos = Documento.query.filter_by(fk_cuenta=id).order_by(Documento.codigo).all() #db.session.execute(db.select(Documento).filter_by(fk_cuenta=id)).scalars()
     if not documentos:
         return jsonify({"error": "Cuenta not found"}), 404
     response  =[x.as_dict() for x in documentos]
@@ -290,6 +291,33 @@ def get_documento_movimientos(id):
                 "fechavencimientodoc":x["fechavencimientodoc"], 
                 "numrecibo":x["numrecibo"]}, response)))
     return response
+
+
+@app.route('/api/documento/<int:id>/pagoanterior', methods=['POST'])
+@jwt_required()
+def documento_pago_anterior(id):
+    req= request.get_json()
+    documento = Documento.query.get(id)
+    if not documento:
+        return jsonify({"status":"error", "message":"no se encontro documento"})
+    if documento.saldo <= 0:
+        return jsonify({"status":"error","message":"ya esta pagado"})
+    if documento.saldo < float(req["cantidad"]):
+        return jsonify({"status":"error","message":"no se puede pagar una cantidad mayor que la que tiene"})
+    result = db.session.execute(text("""SELECT max(codigo) +1 from movimiento"""))
+    movimiento_id = result.fetchone()
+    query = f"""insert into movimiento 
+        (codigo, cantidad, fecha, 
+        cargoabono, fk_documento, fk_tipo, numrecibo)
+        values ({movimiento_id[0]}, {req["cantidad"]}, now(), 'A', {id}, 4, {req["numrecibo"]})"""
+    result = db.session.execute(text(query))
+    db.session.commit()
+    documento.saldo-=float(req["cantidad"])
+    documento.abono+=float(req["cantidad"])
+    db.session.commit()
+    result = db.session.execute(text(f"""update cuenta set saldo=(saldo-{float(req["cantidad"])}) where codigo={documento.fk_cuenta}"""))
+    db.session.commit()
+    return jsonify({"status":"good", "message":"movimiento de abono realizado"})
 
 
 
