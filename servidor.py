@@ -173,7 +173,7 @@ def login():
     if username != "test" or password != "test":
         return jsonify({"msg": "Bad username or password"}), 401
 
-    access_token = create_access_token(identity=username)
+    access_token = create_access_token(identity=username, expires_delta=False)
     return jsonify(access_token=access_token)
 
 @app.route("/protected", methods=["GET"])
