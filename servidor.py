@@ -1,3 +1,4 @@
+from pydoc import Doc
 from flask import Flask, jsonify, request
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -133,6 +134,37 @@ class Inmueble(db.Model):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    
+
+class Documento(db.Model):
+    __tablename__ = 'documento'
+    
+    # Define columns based on the SQL schema
+    codigo = db.Column(db.Integer, primary_key=True, nullable=False)
+    fechadeelaboracion = db.Column(db.Date, nullable=False)
+    fechadevencimiento = db.Column(db.Date, nullable=False)
+    fechadevencimientovar = db.Column(db.Date, nullable=False)
+    saldo = db.Column(db.Float, nullable=False)
+    cargo = db.Column(db.Float, nullable=False)
+    abono = db.Column(db.Float, nullable=False)
+    
+    # Foreign keys
+    fk_cuenta = db.Column(db.Integer, nullable=False)
+    fk_tipo = db.Column(db.Integer, nullable=False)
+    
+    # Relationship (if necessary to link with other tables)
+    # For example, linking to "Cuenta" and "Tipo" tables:
+    # cuenta = db.relationship('Cuenta', backref='documentos')
+    # tipo = db.relationship('Tipo', backref='documentos')
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    
+
+# aqui arriba estan los modelos
+
+
+
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -211,6 +243,16 @@ def cuenta_id(id):
     response  =jsonify(cuenta.as_dict())
     return response
 
+@app.route('/api/cuenta/<int:id>/documentos', methods=['GET'])
+@jwt_required()
+def cuenta_id_documentos(id):
+    documentos = db.session.execute(db.select(Documento).filter_by(fk_cuenta=id)).scalars()
+    if not documentos:
+        return jsonify({"error": "Cuenta not found"}), 404
+    response  =[x.as_dict() for x in documentos]
+    response = jsonify(list(map(lambda x: {"id":x["codigo"], **x}, response)))
+    return response
+
 @app.route('/api/inmueble/<int:id>', methods=['GET'])
 @jwt_required()
 def inmueble_id(id):
@@ -219,6 +261,9 @@ def inmueble_id(id):
         return jsonify({"error": "inmueble not found"}), 404
     response  =jsonify(inmueble.as_dict())
     return response
+
+
+
 
 
 if __name__ == '__main__':
