@@ -309,7 +309,7 @@ def documento_pago_anterior(id):
     query = f"""insert into movimiento 
         (codigo, cantidad, fecha, 
         cargoabono, fk_documento, fk_tipo, numrecibo)
-        values ({movimiento_id[0]}, {req["cantidad"]}, now(), 'A', {id}, 4, {req["numrecibo"]})"""
+        values ({movimiento_id[0]}, {req["cantidad"]}, '{req["fecha"]}', 'A', {id}, 4, {req["numrecibo"]})"""
     result = db.session.execute(text(query))
     db.session.commit()
     documento.saldo-=float(req["cantidad"])
