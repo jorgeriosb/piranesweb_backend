@@ -15,29 +15,29 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 
 connection = None
-#jaja
 
 
 ENV = os.environ.get('ENV')
+USER = os.environ.get('USERD')
+PASS = os.environ.get('PASS')
+HOST = os.environ.get('HOSTD')
 
-#engine = create_engine('postgresql://user:password@host/database')
-#metadata.create_all(engine)
+
 
 
 
 app = Flask(__name__)
 
 if ENV == "production":
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://arcadia:pinares2024@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com:5432/arcadia"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{USER}:{PASS}@{HOST}:5432/arcadia"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = "super-secret"
 else:    
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = "super-secret"
-#engine2 = create_engine('postgresql://iclarpro:2015@localhost/arcadia', connect_args={'options': '-csearch_path={}'.format('public,arcadia,public')})
 if ENV == "production":
-    engine = create_engine("postgresql://arcadia:pinares2024@postgres-db.clm8ssljcpfm.us-east-1.rds.amazonaws.com:5432/arcadia")
+    engine = create_engine(f"postgresql://{USER}:{PASS}@{HOST}:5432/arcadia")
     connection = engine.connect()
 else:
     engine = create_engine('postgresql://jorge.rios:Mexiquito1991$@localhost/arcadia')
@@ -204,11 +204,11 @@ def get_clientes():
     result = db.session.execute(text("""SELECT distinct(cc.codigo) as cuenta, c.codigo as cliente, 
             c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2 
             FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente 
-            join inmueble i on cc.fk_inmueble=i.codigo where saldo>0"""))
+            join inmueble i on cc.fk_inmueble=i.codigo  where i.fk_etapa in (8,9,10,33,34,35) order by 1"""))
     clientes = result.fetchall()
 
     # Convert list of tuples to a list of dictionaries
-    clientes_list = [{"id":cliente[1], "cuenta": cliente[0], 
+    clientes_list = [{"id":cliente[0], "cliente": cliente[1], 
             "nombre": cliente[2], "rfc": cliente[3], "saldo":cliente[4], 
             "manzana":cliente[5], "lote":cliente[6]} for cliente in clientes]
     response  =jsonify(clientes_list)
