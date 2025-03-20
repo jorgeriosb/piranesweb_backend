@@ -227,26 +227,41 @@ def get_cliente(id):
     response  =jsonify(user.as_dict())
     return response
 
+def validaCliente(cliente):
+    cliente["fechadenacimiento"] = None if cliente.get("fechadenacimiento") == "" else cliente.get("fechadenacimiento")
+    cliente["conyugefechadenacimiento"] = None if cliente.get("conyugefechadenacimiento") == "" else cliente.get("conyugefechadenacimiento")
+    cliente["edad"] = None if cliente.get("edad") == "" else cliente.get("edad")
+
+    return cliente
+    
 @app.route('/api/clientes', methods=['POST'])
 def add_cliente():
     new_cliente = request.get_json()
+    new_cliente = validaCliente(new_cliente)
+    #print("viendo cliente", new_cliente)
 
-    if not new_cliente or not new_cliente.get('name') or not new_cliente.get('email'):
-        return jsonify({"error": "Missing data"}), 400
-
-    # conn = get_db_connection()
-    # cursor = conn.cursor()
-    # cursor.execute(
-    #     "INSERT INTO clientes (name, email) VALUES (%s, %s) RETURNING id;",
-    #     (new_cliente['name'], new_cliente['email'])
-    # )
-    # new_id = cursor.fetchone()[0]
-    # conn.commit()
-    # cursor.close()
-    # conn.close()
-
-    #return jsonify({"id": new_id, "name": new_cliente['name'], "email": new_cliente['email']}), 201
-    return jsonify({})
+    if not new_cliente.get('nombre'):
+        return jsonify({"status": "error", "message":"Missing data"}), 400
+    
+    if new_cliente.get("clienteNuevo"):
+        new_cliente.pop("clienteNuevo")
+        result = db.session.execute(text("""select max(codigo) from cliente"""))
+        codigo = result.fetchone()[0]
+        new_cliente["codigo"]=int(codigo+1)
+        cliente = Cliente(**new_cliente)
+        db.session.add(cliente)
+        db.session.commit()    
+    else:
+        new_cliente.pop("clienteNuevo")
+        cliente_find = Cliente.query.get(new_cliente.get('codigo'))
+        if cliente_find:
+            return jsonify({"status": "error", "message":"Ya existe ese codigo"}), 400
+        cliente = Cliente(**new_cliente)
+        db.session.add(cliente)
+        db.session.commit()    
+    
+    
+    return jsonify(cliente.as_dict())
 
 
 @app.route('/api/cuenta/<int:id>', methods=['GET'])
