@@ -258,10 +258,8 @@ def add_cliente():
             return jsonify({"status": "error", "message":"Ya existe ese codigo"}), 400
         cliente = Cliente(**new_cliente)
         db.session.add(cliente)
-        db.session.commit()    
-    
-    
-    return jsonify(cliente.as_dict())
+        db.session.commit()
+    return jsonify({"status":"good", "data":cliente.as_dict()})
 
 
 @app.route('/api/cuenta/<int:id>', methods=['GET'])
