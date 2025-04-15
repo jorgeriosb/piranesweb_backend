@@ -1,6 +1,6 @@
 from pydoc import Doc, doc
 from xml.dom.minidom import Document
-from flask import Flask, jsonify, request, send_file, make_response
+from flask import Flask, jsonify, request, send_file, make_response, render_template
 import os
 from flask_sqlalchemy import SQLAlchemy
 #import sqlalchemy
@@ -396,9 +396,9 @@ def pagar_documentos_varios():
     if recibo:
         for documento in req["formData"]:
             pagar_documento(documento, req["fecha"], recibo)
-
-    hacer_recibopdf(req)
-    return jsonify({"status":"good"})
+    #hacer_recibopdf(req) no se si haga falta
+    print("regreso este recibo ", recibo)
+    return jsonify({"status":"good", "recibo":recibo})
 
 
 @app.route('/api/gixamortizacion/<int:id>', methods=['GET'])
@@ -411,15 +411,19 @@ def get_gixamortizacion(id):
     return response
 
 
-def hacer_recibopdf(req):
-    pass
+# def hacer_recibopdf(req):
+#     pass
 
 
 
 def crear_recibo(pago, intereses, total, referencia, fecha):
     result = db.session.execute(text("""select max(codigo) from recibo"""))
     codigo = result.fetchone()[0]
+    nummovimiento = db.session.execute(text("""select max(numrecibo) from movimiento"""))
+    num = nummovimiento.fetchone()[0]
     codigo+=1
+    if num > codigo:
+        codigo = num+1
     llenado = {"codigo":codigo, "fechaemision":fecha, "abonocapital":pago, 
         "interesmoratorio":intereses, "totalrecibo":total, "referencia":referencia,
         "status":"A", "fk_desarrollo":5, "fechaaplicacion":fecha}
@@ -453,168 +457,60 @@ def pagar_documento(documento, fecha_pago, recibo):
 
 @app.route('/api/recibo/<int:id>')
 def download_recibo(id):
-    html_content = """
-    <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Recibo 21799</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-    }
-    h2, h3 {
-      margin: 0;
-      padding: 0;
-    }
-    .row {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      margin-bottom: 5px;
-    }
-    .field {
-      width: 50%;
-      box-sizing: border-box;
-      padding: 4px 10px;
-    }
-    .field p {
-      margin: 4px 0;
-    }
-    .label {
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table, th, td {
-      border: 1px solid #aaa;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-    }
-    .section {
-      margin-top: 30px;
-    }
-    ol {
-      padding-left: 20px;
-    }
-  </style>
-</head>
-<body>
+    print("viendo el recibo ", id)
+    recibo = Recibo.query.get(id)
+    if not recibo:
+        return jsonify({"error": "recibo not found"}), 404
+    movimientos = db.session.execute(db.select(Movimiento).filter_by(numrecibo=id)).scalars()
+    if not movimientos:
+        return jsonify({"error": "movimientos not found"}), 404
+    firstmov = movimientos.first()
+    documento = Documento.query.get(firstmov.fk_documento)
+    if not documento:
+        return jsonify({"error": "documento not found"}), 404
+    cuenta = Cuenta.query.get(documento.fk_cuenta)
+    if not cuenta:
+        return jsonify({"error": "cuenta not found"}), 404
+    gixamortizacion = GixAmortizacion.query.filter_by(cuenta=cuenta.codigo).scalar()
+    if not gixamortizacion:
+        return jsonify({"error": "gixamortizacion not found"}), 404
+    cliente = Cliente.query.get(gixamortizacion.fkcliente)
+    if not cliente:
+        return jsonify({"error": "cliente not found"}), 404
+    inmueble = Inmueble.query.get(cuenta.fk_inmueble)
+    if not inmueble:
+        return jsonify({"error": "inmueble not found"}), 404
 
-  <h2>Arcadia Promotora, S. de R.L. de C.V.</h2>
-  <p><strong>R.F.C.:</strong> APR-910816-FJ3</p>
+    
+    movimientos = db.session.execute(db.select(Movimiento).filter_by(numrecibo=id)).scalars()
+    good_movimientos = [x.as_dict() for x in movimientos]
 
-  <div class="section">
-    <h3>RECIBO: 21799</h3>
-
-    <!-- Two-column layout, line by line -->
-    <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-  <tr>
-    <td style="width: 50%; padding: 5px;"><strong>Cuenta:</strong> 2961</td>
-    <td style="width: 50%; padding: 5px;"><strong>Fecha de Aplicación:</strong> Febrero 05, 2025</td>
-  </tr>
-  <tr>
-    <td style="padding: 5px;"><strong>Inmueble:</strong> 2771</td>
-    <td style="padding: 5px;"><strong>Id. del Inmueble:</strong> C 113 - Quinta Sección</td>
-  </tr>
-  <tr>
-    <td style="padding: 5px;"><strong>Cliente:</strong> 2716</td>
-    <td style="padding: 5px;"><strong>Fecha de Pago:</strong> Febrero 04, 2025</td>
-  </tr>
-  <tr>
-    <td style="padding: 5px;"><strong>Nombre del Cliente:</strong> GULNARA MOLINA ROMAN</td>
-    <td style="padding: 5px;"><strong>Saldo Posterior al Pago:</strong> $178,807.04</td>
-  </tr>
-  <tr>
-    <td style="padding: 5px;"><strong>Saldo Actual:</strong> $201,157.92</td>
-    <td></td>
-  </tr>
-</table>
-  </div>
-
-  <div class="section">
-    <h4>Movimientos</h4>
-    <table>
-      <thead>
-        <tr>
-          <th>Movimiento</th>
-          <th>Importe</th>
-          <th>Mensualidad</th>
-          <th>Mes a Pagar</th>
-          <th>Documento</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>85756</td>
-          <td>$22,350.88</td>
-          <td>16/24</td>
-          <td>03/02/2025</td>
-          <td>42084</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <p><strong>Pago a Capital:</strong> $22,350.88</p>
-    <p><strong>Intereses Moratorios:</strong> $0.00</p>
-    <p><strong>Total a Pagar:</strong> $22,350.88</p>
-    <p><strong>Referencia:</strong> </p>
-    <p><strong>Id. del Recibo:</strong> 25586</p>
-    <p style="margin-top: 40px;">__________________________<br>Firma del Cajero</p>
-  </div>
-
-  <div class="section">
-    <p><strong>Observaciones:</strong></p>
-    <ol>
-      <li>El pago deberá hacerse con depósito bancario según la referencia que le corresponda a su terreno.</li>
-      <li>El horario de oficina es de 9:00 a 14:00 y de 16:00 a 18:30 horas de Lunes a Viernes.</li>
-      <li>Si el día de vencimiento es inhábil bancario, el pago deberá hacerse el día hábil inmediato anterior.</li>
-      <li>Los intereses moratorios se calculan a la fecha de corte de este estado de cuenta.</li>
-      <li>El presente estado de cuenta solo será válido como recibo si presenta la firma del cajero.</li>
-      <li>Favor de pagar con cheque cruzado a nombre de Arcadia Promotora, S. de R.L. de C.V. y este recibo causará efecto salvo buen cobro del cheque.</li>
-    </ol>
-  </div>
-
-</body>
-</html>
-    """
+    context = {
+        'cuenta': cuenta,
+        'cliente': cliente,
+        "movimientos":good_movimientos,
+        "recibo": recibo,
+        "inmueble": inmueble
+    }
+    
 
     # Generate PDF in memory
-    pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    rendered = render_template('recibo.html', **context)
+
+    # PDFKit options
+    options = {
+        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+    }
+
+    # Generate PDF
+    pdf = pdfkit.from_string(rendered, False, options=options)
     return send_file(
-        io.BytesIO(pdf_bytes),
+        io.BytesIO(pdf),
         mimetype='application/pdf',
         as_attachment=True,
         download_name='recibo_21799.pdf'
     )
-
-
-
-
-
-    #necesito agarrar el movimiento con cargoabono='C' y fk_docucumento=documento 
-    # para obtener relaciondepago y poner ese valor al movimiento
-    #crear movimiento y descontar a documento
-
-
-    # codigo = db.Column(db.Integer, primary_key=True)
-    # cantidad = db.Column(db.Float, nullable=False)
-    # fecha = db.Column(db.Date, nullable=False)
-    # relaciondepago = db.Column(db.String, nullable=True)
-    # cargoabono = db.Column(db.String(1), nullable=False)
-    # fechavencimientodoc = db.Column(db.Date, nullable=True)
-    # fk_documento = db.Column(db.Integer, nullable=False)
-    # fk_tipo = db.Column(db.Integer, nullable=False)
-    # numrecibo = db.Column(db.Integer, nullable=True)
-    pass
 
 
 

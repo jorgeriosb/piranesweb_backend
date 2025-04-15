@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Recibo {{recibo.codigo}}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h2, h3 {
+      margin: 0;
+      padding: 0;
+    }
+    .row {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      margin-bottom: 5px;
+    }
+    .field {
+      width: 50%;
+      box-sizing: border-box;
+      padding: 4px 10px;
+    }
+    .field p {
+      margin: 4px 0;
+    }
+    .label {
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    .section {
+      margin-top: 30px;
+    }
+    ol {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <table style="width: 100%; margin-bottom: 10px; border: none;">
+    <tr>
+      <td style="vertical-align: middle; border: none;">
+        <h2 style="margin: 0;">Arcadia Promotora, S. de R.L. de C.V.</h2>
+      </td>
+      <td style="text-align: right; border: none;"> 
+        <img src="https://s3.us-east-1.amazonaws.com/s3.grupoiclar.com/pinares2.jpg" alt="Logo" style="height: 90px; width: 160px;">
+      </td>
+    </tr>
+  </table>
+  <p><strong>R.F.C.:</strong> APR-910816-FJ3</p>
+
+  <div class="section">
+    <h3>RECIBO: {{recibo.codigo}}</h3>
+
+    <!-- Two-column layout, line by line -->
+    <table style="width: 100%; margin-top: 20px; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px;">
+  <tr>
+    <td style="width: 50%; padding: 5px;"><strong>Cuenta:</strong> {{cuenta.codigo}}</td>
+    <td style="width: 50%; padding: 5px;"><strong>Fecha de Aplicación:</strong> {{recibo.fechaaplicacion}}</td>
+  </tr>
+  <tr>
+    <td style="padding: 5px;"><strong>Inmueble:</strong>{{cuenta.fk_inmueble}}</td>
+    <td style="padding: 5px;"><strong>Id. del Inmueble:</strong>{{inmueble.iden2}} {{inmueble.iden1}} {{inmueble.condominio}}</td>
+  </tr>
+  <tr>
+    <td style="padding: 5px;"><strong>Cliente:</strong> {{cliente.codigo}}</td>
+    <td style="padding: 5px;"><strong>Fecha de Pago:</strong> {{recibo.fechaemision}}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding: 5px;"><strong>Nombre del Cliente:</strong> {{cliente.nombre}}</td>
+  </tr>
+  <tr>
+  <td style="padding: 5px;"><strong>Saldo Actual:</strong> ${{'{:20,.2f}'.format(cuenta.saldo+recibo.abonocapital)}}</td>
+  <td style="padding: 5px;"><strong>Saldo Posterior al Pago:</strong> ${{'{:20,.2f}'.format(cuenta.saldo)}}</td>
+  </tr>
+</table>
+  </div>
+
+  <div class="section">
+    <h4>Movimientos</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Movimiento</th>
+          <th>Importe</th>
+          <th>Mensualidad</th>
+          <th>Mes a Pagar</th>
+          <th>Documento</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for x in movimientos %}
+        <tr>
+          <td>{{x["codigo"]}}</td>
+          <td>${{'{:20,.2f}'.format(x["cantidad"])}}</td>
+          <td>{{x["relaciondepago"]}}</td>
+          <td>{{x["fecha"]}}</td>
+          <td>{{x["fk_documento"]}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <p><strong>Pago a Capital:</strong> ${{'{:20,.2f}'.format(recibo.abonocapital)}}</p>
+    <p><strong>Intereses Moratorios:</strong> ${{'{:20,.2f}'.format(recibo.interesmoratorio)}}</p>
+    <p><strong>Total a Pagar:</strong> ${{'{:20,.2f}'.format(recibo.totalrecibo)}}</p>
+    <!-- <p><strong>Referencia:</strong> </p>
+    <p><strong>Id. del Recibo:</strong> 25586</p> -->
+    <p style="margin-top: 40px;">__________________________<br>Firma del Cajero</p>
+  </div>
+
+  <div class="section">
+    <p><strong>Observaciones:{{recibo.referencia}}</strong></p>
+    <ol>
+      <li>El pago deberá hacerse con depósito bancario según la referencia que le corresponda a su terreno.</li>
+      <li>El horario de oficina es de 9:00 a 14:00 y de 16:00 a 18:30 horas de Lunes a Viernes.</li>
+      <li>Si el día de vencimiento es inhábil bancario, el pago deberá hacerse el día hábil inmediato anterior.</li>
+      <li>Los intereses moratorios se calculan a la fecha de corte de este estado de cuenta.</li>
+      <li>El presente estado de cuenta solo será válido como recibo si presenta la firma del cajero.</li>
+      <li>Favor de pagar con cheque cruzado a nombre de Arcadia Promotora, S. de R.L. de C.V. y este recibo causará efecto salvo buen cobro del cheque.</li>
+    </ol>
+  </div>
+
+</body>
+</html>
