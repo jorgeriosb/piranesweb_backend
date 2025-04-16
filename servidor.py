@@ -1,3 +1,4 @@
+import json
 from pydoc import Doc, doc
 from xml.dom.minidom import Document
 from flask import Flask, jsonify, request, send_file, make_response, render_template
@@ -245,9 +246,9 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@app.route('/api/clientes', methods=['GET'])
+@app.route('/api/clientescuenta', methods=['GET'])
 @jwt_required()
-def get_clientes():
+def get_clientescuenta():
     result = db.session.execute(text("""SELECT distinct(cc.codigo) as cuenta, c.codigo as cliente, 
             c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2 
             FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente 
@@ -272,6 +273,13 @@ def get_cliente(id):
         return jsonify({"error": "Cliente not found"}), 404
 
     response  =jsonify(user.as_dict())
+    return response
+
+@app.route('/api/clientesall', methods=['GET'])
+@jwt_required()
+def get_clientes():
+    clientes = [x.as_dict() for x in Cliente.query.order_by(Cliente.nombre).all()]
+    response = jsonify(clientes)
     return response
 
 def validaCliente(cliente):
@@ -456,6 +464,7 @@ def pagar_documento(documento, fecha_pago, recibo):
 
 
 @app.route('/api/recibo/<int:id>')
+@jwt_required()
 def download_recibo(id):
     print("viendo el recibo ", id)
     recibo = Recibo.query.get(id)
@@ -511,6 +520,15 @@ def download_recibo(id):
         as_attachment=True,
         download_name='recibo_21799.pdf'
     )
+
+
+@app.route('/api/inmueblesdisponibles', methods=['GET'])
+@jwt_required()
+def get_inmuebles_disponibles():
+    inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
+    inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+    response = jsonify(inmuebles_disponibles)
+    return response
 
 
 

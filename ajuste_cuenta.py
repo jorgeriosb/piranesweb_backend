@@ -108,5 +108,5 @@ def update_documentos_and_cuenta(cuenta_codigo):
 
 # Example usage
 if __name__ == "__main__":
-    cuenta_codigo = 2690  # Replace with the actual cuenta code
+    cuenta_codigo = 2969  # Replace with the actual cuenta code
     update_documentos_and_cuenta(cuenta_codigo)
