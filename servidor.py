@@ -190,7 +190,16 @@ class Documento(db.Model):
     # tipo = db.relationship('Tipo', backref='documentos')
     
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        result = {}
+        for c in self.__table__.columns:
+            if c.name in ["saldo", "cargo", "abono"]:
+                val = getattr(self, c.name)
+                val  = round(val,2)
+                result[c.name] = val
+            else:
+                result[c.name] = getattr(self, c.name)
+
+        return result
     
 class Movimiento(db.Model):
     __tablename__ = 'movimiento'
@@ -394,10 +403,10 @@ def pagar_documentos_varios():
     req = request.get_json()
     print("viendo valores ", req)
     cantidad = float(req["cantidad"])
-    lista_catidades = [float(x.get("cantidad", 0))+ float(x.get("intereses"))  for x in req["formData"]]
+    lista_catidades = [round(float(x.get("cantidad", 0)),2)+ round(float(x.get("intereses")),2) for x in req["formData"]]
     total_suma = sum(lista_catidades)
-    intereses = sum([float(x.get("intereses", 0)) for x in req["formData"]])
-    pago = sum([float(x.get("cantidad", 0)) for x in req["formData"]])
+    intereses = sum([round(float(x.get("intereses", 0)),2) for x in req["formData"]])
+    pago = sum([round(float(x.get("cantidad", 0)),2) for x in req["formData"]])
     if cantidad != total_suma:
         return jsonify({"status":"error", "message":"la suma de las cantidades no corresponde con el valor del pago total"})
     recibo = crear_recibo(pago, intereses, cantidad, req["referencia"], req["fecha"])
