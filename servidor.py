@@ -52,6 +52,25 @@ db = SQLAlchemy(app)
 CORS(app)
 jwt = JWTManager(app)
 
+
+class Vendedor(db.Model):
+    __tablename__ = 'vendedor'
+
+    codigo = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String)
+    domicilio = db.Column(db.String)
+    cp = db.Column(db.String)
+    ciudad = db.Column(db.String)
+    estado = db.Column(db.String)
+    telefono = db.Column(db.String)
+    rfc = db.Column(db.String)
+    email = db.Column(db.String)
+    activo = db.Column(db.Boolean)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 class GixAmortizacion(db.Model):
     __tablename__ = 'gixamortizacion'
 
@@ -551,6 +570,14 @@ def get_inmuebles_disponibles():
     inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
     inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
     response = jsonify(inmuebles_disponibles)
+    return response
+
+
+@app.route('/api/vendedores', methods=['GET'])
+@jwt_required()
+def get_vendedores():
+    vendedores = [x.as_dict() for x in Vendedor.query.all()]
+    response = jsonify(vendedores)
     return response
 
 
