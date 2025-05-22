@@ -16,6 +16,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 import pdfkit
 import io
+from datetime import date, datetime
 
 connection = None
 
@@ -114,8 +115,21 @@ class Cliente(db.Model):
     identificacion = db.Column(db.String)
     edad = db.Column(db.Integer)
 
+    # def as_dict(self):
+    #     return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            if isinstance(value, datetime):
+                result[column.name] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(value, date):
+                result[column.name] = value.strftime('%Y-%m-%d')
+            else:
+                result[column.name] = value
+        return result
+
 
 class Cuenta(db.Model):
     __tablename__ = "cuenta"
@@ -537,6 +551,15 @@ def get_inmuebles_disponibles():
     inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
     inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
     response = jsonify(inmuebles_disponibles)
+    return response
+
+
+@app.route('/api/otro', methods=['GET'])
+@jwt_required()
+def otro():
+    inmuebles_cuenta = Cuenta.query.with_entities(Cuenta.fk_inmueble).all()
+    Inmueble.query.filter(~Inmueble.codigo.in_(inmuebles_cuenta)).all()
+    response = jsonify({})
     return response
 
 
