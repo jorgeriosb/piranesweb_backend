@@ -437,7 +437,7 @@ def pagar_documentos_varios():
     print("viendo valores ", req)
     cantidad = float(req["cantidad"])
     lista_catidades = [round(float(x.get("cantidad", 0)),2)+ round(float(x.get("intereses")),2) for x in req["formData"]]
-    total_suma = sum(lista_catidades)
+    total_suma = round(sum(lista_catidades),2)
     intereses = sum([round(float(x.get("intereses", 0)),2) for x in req["formData"]])
     pago = sum([round(float(x.get("cantidad", 0)),2) for x in req["formData"]])
     if cantidad != total_suma:
