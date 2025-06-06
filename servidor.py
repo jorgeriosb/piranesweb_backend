@@ -197,8 +197,15 @@ class Inmueble(db.Model):
     preciopormetro = db.Column(db.Numeric, nullable=True)
     referenciapago = db.Column(db.String, nullable=True)
 
+    # def as_dict(self):
+    #     return {c.name: getattr(self, c.name) for c in self.__table__.columns}
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            result[column.name] = value
+        result["id"]=getattr(self, "codigo")
+        return result
     
 
 class Documento(db.Model):
@@ -401,6 +408,24 @@ def get_documento_movimientos(id):
                 "fechavencimientodoc":x["fechavencimientodoc"], 
                 "numrecibo":x["numrecibo"]}, response)))
     return response
+
+
+@app.route('/api/updateinmuebleprecio', methods=['POST'])
+@jwt_required()
+def update_inmueble_precio():
+    req= request.get_json()
+    id = req["inmueble"]
+    precioxm2 = req["precio"]
+    print("id ", id, " precioxm2 ", precioxm2)
+    inmueble = Inmueble.query.get(id)
+    if not inmueble:
+        return jsonify({"status":"error", "message":"no se encontro inmueble"})
+    result = db.session.execute(text(f"""update inmueble set preciopormetro={precioxm2}, precio=({precioxm2}*superficie)  where codigo={id}"""))
+    db.session.commit()
+    return jsonify({"status":"good", "message":"precio actualizado"})
+
+
+
 
 
 @app.route('/api/documento/<int:id>/pagoanterior', methods=['POST'])
