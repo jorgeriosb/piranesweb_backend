@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Contrato de Compraventa de Terreno</title>
+  <style>
+    body { font-family: "Times New Roman", serif; line-height: 1.5; font-size: 12pt; margin: 40px; }
+    h1, h2, h3 { text-align: center; }
+    .firma { margin-top: 60px; text-align: center; }
+    .clausula { margin-top: 20px; }
+    .sub { font-weight: bold; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+<h1>CONTRATO DE COMPRAVENTA DE TERRENO</h1>
+<p>
+  Contrato de adhesión de compraventa de terreno destinado a casa habitación, celebrado entre <strong>ARCADIA PROMOTORA S. DE R.L. DE C.V.</strong> representada por el Sr. <strong>JAIME LARES RANGEL</strong>, en adelante <strong>“LA PARTE VENDEDORA”</strong>, y <strong>{{ comprador_nombre }}</strong>, en adelante <strong>“LA PARTE COMPRADORA”</strong>.
+</p>
+
+<h2>DECLARACIONES</h2>
+
+<p class="sub">I. Declara “LA PARTE VENDEDORA”:</p>
+<ul>
+  <li>Que es legítima propietaria del terreno ubicado en el fraccionamiento Pinares Tapalpa, municipio de Tapalpa, Jalisco, con superficie de {{ superficie_m2 }} m².</li>
+  <li>El terreno se encuentra libre de gravamen y listo para escriturar.</li>
+  <li>Se entrega sin servicios urbanos, por ser de vocación campestre.</li>
+</ul>
+
+<p class="sub">II. Declara “LA PARTE COMPRADORA”:</p>
+<ul>
+  <li>Que es de nacionalidad {{ comprador_nacionalidad }}, mayor de edad y en pleno uso de sus derechos civiles.</li>
+</ul>
+
+<h2>CLÁUSULAS</h2>
+
+<p class="clausula"><strong>Primera. Objeto:</strong> “LA PARTE VENDEDORA” vende a “LA PARTE COMPRADORA” el terreno descrito anteriormente.</p>
+
+<p class="clausula"><strong>Segunda. Precio y forma de pago:</strong> El precio total de la compraventa es <strong>${{ precio_total }}</strong> M.N. ({{ precio_total_letras }}), pagado de la siguiente forma:
+<ul>
+  <li><strong>${{ anticipo }}</strong> en este acto.</li>
+  <li><strong>${{ saldo_escritura }}</strong> a la firma de escrituras.</li>
+</ul>
+</p>
+
+<p class="clausula"><strong>Tercera. Firma de Escritura Pública:</strong> Se realizará ante el Notario No. 2 de El Salto, Jalisco, Lic. Javier Alejandro Macías Preciado, una vez liquidado el precio.</p>
+
+<p class="clausula"><strong>Cuarta. Entrega del Inmueble:</strong> La posesión se entrega al momento de firma del contrato. La parte compradora se obliga a respetar el uso de suelo habitacional campestre.</p>
+
+<p class="clausula"><strong>Novena. Pena Convencional:</strong> El incumplimiento genera una pena del 20% del precio pactado.</p>
+
+<p class="clausula"><strong>Décima Quinta. Competencia administrativa:</strong> En caso de disputa, las partes podrán acudir a la <strong>PROFECO</strong>.</p>
+
+<p class="clausula"><strong>Décima Sexta. Jurisdicción:</strong> Las partes se someten a los tribunales competentes en Guadalajara, Jalisco.</p>
+
+<br>
+
+<p>Leído que fue el contenido del presente contrato, lo firman las partes en Guadalajara, Jalisco, a {{ fecha_contrato }}.</p>
+
+<div class="firma">
+  <p>______________________________<br><strong>“LA PARTE VENDEDORA”</strong><br>{{ nombre_vendedora }}</p>
+</div>
+
+<div class="firma">
+  <p>______________________________<br><strong>“LA PARTE COMPRADORA”</strong><br>{{ comprador_nombre }}</p>
+</div>
+
+</body>
+</html>

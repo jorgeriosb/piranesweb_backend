@@ -19,6 +19,35 @@ import io
 from datetime import date, datetime, timedelta
 import math
 
+from num2words import num2words
+from dateutil.relativedelta import relativedelta
+
+
+def calcular_fecha_fin(fecha_inicio, mensualidades):
+    """
+    Suma la cantidad de mensualidades a la fecha_inicio y regresa la fecha final.
+
+    :param fecha_inicio: fecha de inicio (datetime.date o datetime.datetime)
+    :param mensualidades: número de meses a sumar (int)
+    :return: fecha final (datetime.date)
+    """
+    return fecha_inicio + relativedelta(months=mensualidades - 1)
+
+
+
+def numero_a_letras_mxn(cantidad):
+    """
+    Convierte una cantidad numérica a texto estilo moneda MXN.
+    Ejemplo: 790440.84 -> "Setecientos noventa mil cuatrocientos cuarenta pesos 84/100 M.N."
+    """
+    cantidad = round(float(cantidad), 2)
+    parte_entera = int(cantidad)
+    parte_decimal = int(round((cantidad - parte_entera) * 100))
+
+    letras = num2words(parte_entera, lang='es').capitalize()
+    return f"{letras} pesos {parte_decimal:02d}/100 M.N."
+
+
 
 
 connection = None
@@ -728,24 +757,32 @@ def genera_amortizacion():
 @app.route('/api/pagare', methods=['POST'])
 @jwt_required()
 def genera_pagare():
+    req= request.get_json()
+    mensualidad = req["total_pagare"] / req["plazo_meses"]
+    fecha = datetime.strptime(req["fecha_inicio"], '%Y-%m-%d').date()
+    fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
+    fecha_fin = fecha_final.strftime('%Y-%m-%d')
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+    mensualidad = round(mensualidad, 2)
     context = {
-        "acreedor": "Desarrolladora Monteverde S.A. de C.V.",
-        "domicilio_acreedor": "Av. Empresarios 135, Zapopan, Jalisco",
-        "total_pagare": "790,440.84",
-        "total_letras": "Setecientos noventa mil cuatrocientos cuarenta pesos 84/100 M.N.",
-        "plazo_meses": 36,
-        "mensualidad": "21,956.69",
-        "fecha_inicio": "18 de marzo de 2025",
-        "fecha_fin": "18 de febrero de 2028",
+        "acreedor": req["acreedor"],
+        "domicilio_acreedor": req["domicilio_acreedor"],
+        "total_pagare": req["total_pagare"],
+        "total_letras": f"{numero_a_letras_mxn(req["total_pagare"])}",
+        "plazo_meses": req["plazo_meses"],
+        "mensualidad": mensualidad,
+        "fecha_inicio": req["fecha_inicio"],
+        "fecha_fin": fecha_fin,
         "interes_moratorio": 25,
-        "fecha_actual": "8 de junio de 2025",
-        "nombre_suscriptor": "JJM LENNIE PROPERTIES",
-        "domicilio_suscriptor": "Puerta de Hierro Núm. 5225 Int. 701, Col. Puerta de Hierro, Zapopan, Jalisco, C.P. 45116",
-        "telefono_suscriptor": "217-7694102"
+        "fecha_actual": fecha_hoy,
+        "nombre_suscriptor": req["nombre_suscriptor"],
+        "domicilio_suscriptor": req["domicilio_suscriptor"],
+        "telefono_suscriptor": req["telefono_suscriptor"]
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
-    rendered = render_template('amortizacion.html', **context)
+    rendered = render_template('pagare.html', **context)
 
     # PDFKit options
     options = {
@@ -758,9 +795,57 @@ def genera_pagare():
         io.BytesIO(pdf),
         mimetype='application/pdf',
         as_attachment=True,
-        download_name='amortizacion.pdf'
+        download_name='pagare.pdf'
     )
 
+
+@app.route('/api/contrato', methods=['POST'])
+@jwt_required()
+def genera_contrato():
+    req= request.get_json()
+    mensualidad = req["total_pagare"] / req["plazo_meses"]
+    fecha = datetime.strptime(req["fecha_inicio"], '%Y-%m-%d').date()
+    fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
+    fecha_fin = fecha_final.strftime('%Y-%m-%d')
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+    mensualidad = round(mensualidad, 2)
+    context = {
+        "comprador_nombre": req["comprador_nombre"],
+        "comprador_nacionalidad": req["comprador_nacionalidad"],
+        "superficie_m2":req["superficie_m2"],
+        "precio_total": req["precio_total"],
+        "precio_total_letras": f"{numero_a_letras_mxn(req["precio_total"])}",
+        "anticipo": req["anticipo"],
+        "saldo_escritura": "342,102.75", #este no se de donde lo tengo que agarrar
+        "fecha_contrato": fecha_hoy,
+        "nombre_vendedora": "ARCADIA PROMOTORA S. DE R.L. DE C.V.",
+        "lindero1": req["lindero1"],
+        "lindero2": req["lindero2"],
+        "lindero3": req["lindero3"],
+        "lindero4": req["lindero4"],
+        "titulo1": req["titulo1"],
+        "titulo2": req["titulo2"],
+        "titulo3": req["titulo3"],
+        "titulo4": req["titulo4"],
+    }
+    # Generate PDF in memory
+    #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    rendered = render_template('contratoetapa5contado.html', **context)
+
+    # PDFKit options
+    options = {
+        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+    }
+
+    # Generate PDF
+    pdf = pdfkit.from_string(rendered, False, options=options)
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='pagare.pdf'
+    )
 
 
 
