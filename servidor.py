@@ -16,7 +16,10 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 import pdfkit
 import io
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+import math
+
+
 
 connection = None
 
@@ -614,6 +617,149 @@ def otro():
     response = jsonify({})
     return response
 
+
+
+@app.route('/api/tablaamortizacion', methods=['POST'])
+@jwt_required()
+def genera_amortizacion():
+    req= request.get_json()
+    # id = req["inmueble"]
+    # precioxm2 = req["precio"]
+
+    # payload["formadepago"]=formFormaDePago.formadepago;
+    # payload["fechaprimerpago"]= formFormaDePago.fechaprimerpago
+    # payload["precio"] = formFormaDePago.preciocontado
+    # payload["enganche"] = formFormaDePago.enganche
+    # payload["descuento"] = formFormaDePago.descuento
+    # payload["fechaenganche"] = formFormaDePago.fechaenganche
+    # payload["saldoafinanciar"] = formFormaDePago.saldoafinanciar
+    # payload["inmueble_iden1"] = inmuebleData.iden1
+    # payload["inmueble_iden2"] = inmuebleData.iden2
+    # payload["inmueble_preciopormetro"]=inmuebleData.preciopormetro
+    # payload["inmueble_superficie"]=inmuebleData.superficie
+    # payload["mensualidades"]=0
+    # payload["interes_anual"] =0
+    # if(formFormaDePago.formadepago == "R"){
+    # payload["mensualidades"]=formFormaDePago.plazomeses
+    # payload["interes_anual"] =formFormaDePago.tasainteresanual
+    
+
+    superficie = float(req["inmueble_superficie"])
+    precio_m2 = float(req["inmueble_preciopormetro"])
+    enganche = float(req["enganche"])
+    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
+    mensualidades = int(req.get("mensualidades",0))
+    descuento = float(req.get("descuento"))
+
+    # Calcular tabla de amortización
+    # Cálculos iniciales
+    saldo_a_financiar = superficie * precio_m2 - enganche
+    if descuento >0:
+        saldo_a_financiar-=descuento
+
+    interes_mensual = interes_anual / 100 / 12
+    total_a_pagar = 0
+    if interes_mensual > 0:
+        mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
+    else:
+        mensualidad = saldo_a_financiar / mensualidades
+
+    mensualidad = round(mensualidad, 2)
+
+    # Generar tabla de amortización
+    tabla = []
+    saldo = saldo_a_financiar
+    fecha_inicio = datetime.today() # falta esto de fechas
+    for i in range(1, mensualidades + 1):
+        interes = round(saldo * interes_mensual, 2)
+        abono = round(mensualidad - interes, 2)
+        saldo = round(saldo - abono, 2)
+        if saldo < 0: saldo = 0.00
+
+        tabla.append({
+            "n_pago": i,
+            "fecha": (fecha_inicio + timedelta(days=30 * i)).strftime("%d-%m-%Y"),
+            "abono": abono,
+            "interes": interes,
+            "mensualidad": mensualidad,
+            "saldo": saldo
+        })
+
+    # Totales
+    total_intereses = round(sum(p["interes"] for p in tabla), 2)
+    total_a_pagar = round(mensualidad * mensualidades, 2)
+
+    context = {
+        "inmueble_iden1":req["inmueble_iden1"],
+        "inmueble_iden2":req["inmueble_iden2"],
+        "superficie":superficie,
+        "precio_m2":precio_m2,
+        "enganche":enganche,
+        "saldo_a_financiar":saldo_a_financiar,
+        "mensualidades":mensualidades,
+        "interes_anual":interes_anual,
+        "total_intereses":total_intereses,
+        "total_a_pagar":total_a_pagar,
+        "mensualidad":mensualidad,
+        "tabla":tabla,
+        "descuento":descuento
+    }
+    
+
+    # Generate PDF in memory
+    #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    rendered = render_template('amortizacion.html', **context)
+
+    # PDFKit options
+    options = {
+        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+    }
+
+    # Generate PDF
+    pdf = pdfkit.from_string(rendered, False, options=options)
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='amortizacion.pdf'
+    )
+
+
+@app.route('/api/pagare', methods=['POST'])
+@jwt_required()
+def genera_pagare():
+    context = {
+        "acreedor": "Desarrolladora Monteverde S.A. de C.V.",
+        "domicilio_acreedor": "Av. Empresarios 135, Zapopan, Jalisco",
+        "total_pagare": "790,440.84",
+        "total_letras": "Setecientos noventa mil cuatrocientos cuarenta pesos 84/100 M.N.",
+        "plazo_meses": 36,
+        "mensualidad": "21,956.69",
+        "fecha_inicio": "18 de marzo de 2025",
+        "fecha_fin": "18 de febrero de 2028",
+        "interes_moratorio": 25,
+        "fecha_actual": "8 de junio de 2025",
+        "nombre_suscriptor": "JJM LENNIE PROPERTIES",
+        "domicilio_suscriptor": "Puerta de Hierro Núm. 5225 Int. 701, Col. Puerta de Hierro, Zapopan, Jalisco, C.P. 45116",
+        "telefono_suscriptor": "217-7694102"
+    }
+    # Generate PDF in memory
+    #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    rendered = render_template('amortizacion.html', **context)
+
+    # PDFKit options
+    options = {
+        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+    }
+
+    # Generate PDF
+    pdf = pdfkit.from_string(rendered, False, options=options)
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='amortizacion.pdf'
+    )
 
 
 

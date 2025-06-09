@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pagaré</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.6; padding: 40px; }
+        h1, h2 { text-align: center; }
+        p { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <h1>PAGARÉ</h1>
+    <p>Por este pagaré me obligo a pagar incondicionalmente a la orden de <strong>{{ acreedor }}</strong>, en el domicilio ubicado en {{ domicilio_acreedor }} o en el lugar que se me indique oportunamente, la cantidad de <strong>${{ total_pagare }}</strong> M.N. ({{ total_letras }}).</p>
+
+    <p>El pago se realizará en <strong>{{ plazo_meses }}</strong> mensualidades consecutivas de <strong>${{ mensualidad }}</strong> M.N. cada una, sin intereses ordinarios.</p>
+
+    <p>Los pagos se efectuarán los días <strong>18 de cada mes</strong>, iniciando el <strong>{{ fecha_inicio }}</strong> y terminando el <strong>{{ fecha_fin }}</strong>.</p>
+
+    <p>En caso de falta de pago de <strong>dos o más mensualidades consecutivas</strong>, se considerará vencido anticipadamente el plazo del presente pagaré, quedando obligado el suscriptor a cubrir de inmediato la totalidad del saldo insoluto.</p>
+
+    <p>Este pagaré causará un interés moratorio del <strong>{{ interes_moratorio }}% anual</strong> sobre las cantidades vencidas y no pagadas, a partir del día siguiente en que se incurra en mora y hasta el día del pago total.</p>
+
+    <p>El suscriptor renuncia al fuero de su domicilio y se somete expresamente a los tribunales de la ciudad de Guadalajara, Jalisco.</p>
+
+    <br><br><br>
+    <p>Lugar y fecha de suscripción: Guadalajara, Jalisco, a {{ fecha_actual }}</p>
+
+    <p><strong>Nombre del Suscriptor:</strong> {{ nombre_suscriptor }}</p>
+    <p><strong>Domicilio:</strong> {{ domicilio_suscriptor }}</p>
+    <p><strong>Teléfono:</strong> {{ telefono_suscriptor }}</p>
+
+    <br><br><br><br>
+    <p>_______________________________<br>Firma del Suscriptor</p>
+</body>
+</html>

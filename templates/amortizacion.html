@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabla de Amortización con Intereses</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+
+    <table style="width: 100%; margin-bottom: 10px; border: none;">
+        <tr>
+          <td style="vertical-align: middle; border: none;">
+            <h2 style="margin: 0;">Arcadia Promotora, S. de R.L. de C.V.</h2>
+          </td>
+          <td style="text-align: right; border: none;"> 
+            <img src="https://s3.us-east-1.amazonaws.com/s3.grupoiclar.com/pinares2.jpg" alt="Logo" style="height: 90px; width: 160px;">
+          </td>
+        </tr>
+      </table>
+      <p><strong>R.F.C.:</strong> APR-910816-FJ3</p>
+
+      <h2>Resumen Financiero</h2>
+    
+      <div class="section">
+    
+        <!-- Two-column layout, line by line -->
+        <table style="width: 100%; margin-top: 20px; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px;">
+      <tr>
+        <td style="width: 50%; padding: 5px;"><strong>Inmueble:</strong> {{inmueble_iden1}}-{{inmueble_iden2}}</td>
+        <td style="width: 50%; padding: 5px;"><strong></strong></td>
+      </tr>
+      <tr>
+        <td style="padding: 5px;"><strong>Superficie:</strong> {{'{:20,.2f}'.format(superficie)}} m²</td>
+        <td style="padding: 5px;"><strong>Precio por m²:</strong> ${{ precio_m2 }}</td>
+      </tr>
+      <tr>
+        <td style="padding: 5px;"><strong>Enganche:</strong> ${{'{:20,.2f}'.format(enganche)}}</td>
+        <td style="padding: 5px;"><strong>Saldo a financiar:</strong> ${{'{:20,.2f}'.format(saldo_a_financiar) }}</td>
+      </tr>
+      <tr>
+        <td style="padding: 5px;"><strong>Mensualidades:</strong> {{mensualidades}}</td>
+        <td style="padding: 5px;"><strong>Interes Anual:</strong> {{ interes_anual }}%</td>
+      </tr>
+      <tr>
+        <td style="padding: 5px;"><strong>Descuento:</strong> {{descuento}}</td>
+        <td style="padding: 5px;"><strong>Interes Anual:</strong> {{ interes_anual }}%</td>
+      </tr>
+      
+    </table>
+
+    
+    <h2>Tabla de Amortización</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>No. Pago</th>
+                <th>Fecha</th>
+                <th>Abono a Capital</th>
+                <th>Interés</th>
+                <th>Mensualidad</th>
+                <th>Saldo Restante</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for pago in tabla %}
+            <tr>
+                <td>{{ pago.n_pago }}</td>
+                <td>{{ pago.fecha }}</td>
+                <td>${{'{:20,.2f}'.format(pago.abono) }}</td>
+                <td>${{'{:20,.2f}'.format(pago.interes) }}</td>
+                <td>${{'{:20,.2f}'.format(pago.mensualidad) }}</td>
+                <td>${{'{:20,.2f}'.format(pago.saldo) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
