@@ -1,69 +1,510 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Contrato de Compraventa de Terreno</title>
-  <style>
-    body { font-family: "Times New Roman", serif; line-height: 1.5; font-size: 12pt; margin: 40px; }
-    h1, h2, h3 { text-align: center; }
-    .firma { margin-top: 60px; text-align: center; }
-    .clausula { margin-top: 20px; }
-    .sub { font-weight: bold; margin-top: 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Contrato de Compraventa de Terreno</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { text-align: center; }
+        p, li { text-align: justify; }
+        ul { margin-left: 20px; }
+    </style>
 </head>
 <body>
 
 <h1>CONTRATO DE COMPRAVENTA DE TERRENO</h1>
+
 <p>
-  Contrato de adhesión de compraventa de terreno destinado a casa habitación, celebrado entre <strong>ARCADIA PROMOTORA S. DE R.L. DE C.V.</strong> representada por el Sr. <strong>JAIME LARES RANGEL</strong>, en adelante <strong>“LA PARTE VENDEDORA”</strong>, y <strong>{{ comprador_nombre }}</strong>, en adelante <strong>“LA PARTE COMPRADORA”</strong>.
+Contrato de adhesión de compraventa de terreno destinado a casa habitación, al que, en lo sucesivo, se le denominara <strong>“EL CONTRATO”</strong>, que celebran por una parte, la Sociedad Mercantil denominada <strong>ARCADIA PROMOTORA S. DE R.L. DE C.V.</strong>, quien comparece al presente acto jurídico a través de su Representante Legal el señor <strong>JAIME LARES RANGEL</strong>, a quien en lo sucesivo se le denominará, <strong>“LA PARTE VENDEDORA”</strong>, y por la otra <strong>MONICA POMAR VOLLRATH</strong> por su propio derecho a través. A quien en lo sucesivo se le denominará <strong>“LA PARTE COMPRADORA”</strong>; ambos sujetos contractuales que en su conjunto serán designadas como <strong>“LAS PARTES”</strong>.
 </p>
 
-<h2>DECLARACIONES</h2>
+<h2>Declaraciones</h2>
 
-<p class="sub">I. Declara “LA PARTE VENDEDORA”:</p>
+<h3>I.- Declara “LA PARTE VENDEDORA” que:</h3>
+
 <ul>
-  <li>Que es legítima propietaria del terreno ubicado en el fraccionamiento Pinares Tapalpa, municipio de Tapalpa, Jalisco, con superficie de {{ superficie_m2 }} m².</li>
-  <li>El terreno se encuentra libre de gravamen y listo para escriturar.</li>
-  <li>Se entrega sin servicios urbanos, por ser de vocación campestre.</li>
+    <li>
+        <strong>a.</strong> Es una sociedad mercantil <strong>MEXICANA</strong>, legalmente constituida de conformidad con las Leyes de los Estados Unidos Mexicanos, según consta en el documento público 43,065 otorgado ante la fe del Licenciado <strong>FELIPE IGNACIO VAZQUEZ ALDANA SAUZA</strong> Notario Público número <strong>2 dos</strong> de la municipalidad de <strong>San Pedro Tlaquepaque, Jalisco,</strong> instrumento que consta inscrito en el Registro Público de la Propiedad de Comercio de <strong>Guadalajara, Jalisco,</strong> bajo Inscripción 311-312, del Tomo 410, del Libro Primero y que puede ser consultado por la compradora en <a href="http://www.pinares-tapalpa.com">WWW.PINARES TAPALPA.COM</a><br/>
+    </li>
+    <li>
+        <strong>b.</strong> Su representante legal señor <strong>JAIME LARES RANGEL</strong>, cuenta con las facultades suficientes para obligarla en los términos y condiciones del presente contrato, lo cual se acredita en términos del instrumento público número <strong>18,797</strong> otorgado ante la fe del Licenciado <strong>JAVIER ALEJANDRO MACIAS PRECIADO</strong> Notario Público número <strong>2 dos</strong> de la municipalidad de <strong>El Salto, Jalisco,</strong> instrumento que consta inscrito en el Registro Público de la Propiedad de Comercio de <strong>Guadalajara, Jalisco,</strong> bajo El Folio Mercantil Electrónico número 15959, facultades que no le han sido revocadas ni modificadas en forma alguna. Tal documentación puede ser consultada por “LA PARTE COMPRADORA” en <a href="http://www.pinares-tapalpa.com">WWW.PINARES TAPALPA.COM</a><br/>
+    </li>
+    <li>
+        <strong>c.</strong> Su <strong>Objeto social</strong> versa en su ARTICULO 2DO, dice a la letra <em> EL OBJETO DE LA SOCIEDAD SERA:</em> A) La compra venta, consignación y arrendamiento de toda clase de inmuebles, especialmente predios rústicos, granjas y huertos familiares, así como la planeación, proyección y realización de toda clase de trámites y obras tendientes al desarrollo de dichos inmuebles, incluyendo la perforación de pozos.<br/>
+    </li>
+    <li>
+        <strong>d.</strong> Su domicilio es el ubicado en Avenida Hidalgo número 1443 Planta Baja, Colonia Americana en Guadalajara, Jalisco; Código Postal 44160 y su Registro Federal de Contribuyentes es <strong>APR910816FJ3</strong>.
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>e.</strong> Es legítima propietaria del terreno marcado con la Letra A del Módulo 110. Dicho inmueble tiene una superficie de <strong>1,585.50 m²</strong> y las siguientes medidas y linderos:
+        <table>
+            <thead>
+                <tr>
+                    <th>Orientación</th>
+                    <th>Medida</th>
+                    <th>Colindancia</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>NOR-PONIENTE</td>
+                    <td>52.00 m</td>
+                    <td>Lote 109 H</td>
+                </tr>
+                <tr>
+                    <td>NOR-ORIENTE</td>
+                    <td>40.48 m</td>
+                    <td>Donación Estatal</td>
+                </tr>
+                <tr>
+                    <td>SUR-ORIENTE</td>
+                    <td>52.00 m</td>
+                    <td>Lote 110 B</td>
+                </tr>
+                <tr>
+                    <td>SUR-PORIENTE</td>
+                    <td>22.58 m</td>
+                    <td>Vista del Bajío</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>
+            Ubicado en el Fraccionamiento denominado <strong>Pinares Tapalpa</strong>, en el Municipio de Tapalpa, Jalisco; como se acredita en términos de la Escritura Pública número 74,331 (setenta y cuatro mil trescientos treinta y uno) de fecha 21 de diciembre del año 2018, ante la fe del Notario Público 130 de Guadalajara, Jalisco, Licenciado Roberto Armando Orozco Alonso, y debidamente inscrita el día 29 de noviembre del año 1991 en el Folio Real 5728368 en el Registro Público de la Propiedad y de Comercio de Ciudad Guzmán, en el Estado de Jalisco.
+        </p>
+        <p>
+            Dicha documentación puede ser consultada por la parte compradora en <a href="http://www.pinares-tapalpa.com" target="_blank">WWW.PINARESTAPALPA.COM</a>.
+        </p>
+    </li>
+    <li>
+        <strong>f.</strong> El inmueble indicado en el inciso previo está sujeto al régimen de propiedad en condominio, en términos de la escritura pública número 18,798 de fecha 30 de septiembre del año 2020, otorgada ante la fe del Licenciado JAVIER ALEJANDRO MACIAS PRECIADO, Notario Público número 2 de El Salto, Jalisco. En este instrumento se describen las áreas de uso común y el porcentaje indiviso, información que puede ser consultada en <a href="http://www.pinares-tapalpa.com" target="_blank">WWW.PINARESTAPALPA.COM</a>.
+    </li>
+    <li>
+        <strong>g.</strong> El terreno indicado en el inciso <em>e</em> cuenta con uso de suelo <strong>Habitacional Campestre</strong>, como se acredita en los documentos anexos al presente contrato (“Anexo A”). También cuenta con las licencias, permisos, autorizaciones y <strong>urbanizaciones</strong> correspondientes.
+        <br>
+        Esta documentación está disponible para “LA PARTE COMPRADORA” en <a href="http://www.pinares-tapalpa.com" target="_blank">WWW.PINARESTAPALPA.COM</a>.
+    </li>
+    <li>
+        <strong>h.</strong> El terreno objeto del contrato no se encuentra sujeto a ningún régimen especial, puede escriturarse de inmediato y no está bajo régimen ejidal o comunal.
+    </li>
+    <li>
+        <strong>i.</strong> El terreno cuenta con estudio de factibilidad técnica oficial avalado por autoridad competente, solo para efectos de gestiones de trámite. Por la vocación campestre del fraccionamiento, no requiere instalación de servicios básicos como energía eléctrica, gas natural o LP, agua potable, drenaje, alcantarillado o alumbrado público.
+    </li>
+    <li>
+        <strong>j.</strong> Al momento de la escrituración que formalice el contrato de compraventa, el inmueble deberá estar libre de todo gravamen que afecte la propiedad de la compradora sobre el mismo.
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>k.</strong> Pone a disposición de “LA PARTE COMPRADORA” la información y documentación especificada en los <strong>“Anexos D y E”</strong> del presente contrato.
+    </li>
 </ul>
 
-<p class="sub">II. Declara “LA PARTE COMPRADORA”:</p>
+<h3>II. Declara “LA PARTE COMPRADORA” que:</h3>
 <ul>
-  <li>Que es de nacionalidad {{ comprador_nacionalidad }}, mayor de edad y en pleno uso de sus derechos civiles.</li>
+    <li>
+        <strong>a.</strong> Es de nacionalidad <strong>INDIA</strong>, acredita su identidad con su <strong>Credencial de Elector</strong> con número de folio (Instituto Nacional Electoral), tiene <strong>31 años</strong>; y su estado civil es <strong>Soltera</strong>.
+    </li>
+</ul>
+
+<h3>III. Declaran las partes que:</h3>
+<ul>
+    <li>
+        <strong>a.</strong> Es su voluntad celebrar el presente contrato de acuerdo a las siguientes:
+    </li>
 </ul>
 
 <h2>CLÁUSULAS</h2>
 
-<p class="clausula"><strong>Primera. Objeto:</strong> “LA PARTE VENDEDORA” vende a “LA PARTE COMPRADORA” el terreno descrito anteriormente.</p>
-
-<p class="clausula"><strong>Segunda. Precio y forma de pago:</strong> El precio total de la compraventa es <strong>${{ precio_total }}</strong> M.N. ({{ precio_total_letras }}), pagado de la siguiente forma:
-<ul>
-  <li><strong>${{ anticipo }}</strong> en este acto.</li>
-  <li><strong>${{ saldo_escritura }}</strong> a la firma de escrituras.</li>
-</ul>
+<h3>Primera. Objeto</h3>
+<p>
+    En virtud del presente contrato, “LA PARTE VENDEDORA” <strong>VENDE</strong> a “LA PARTE COMPRADORA”, quien adquiere para sí el terreno indicado en la declaración I, inciso e) anterior, el cual tiene las especificaciones de identificación, características, extensión, estado físico general, en su caso áreas de uso común con otros inmuebles y porcentaje de indiviso referidos en el <strong>“Anexo C”</strong> del presente contrato, el cual, firmado por ambas partes, forma parte integrante del mismo.
 </p>
 
-<p class="clausula"><strong>Tercera. Firma de Escritura Pública:</strong> Se realizará ante el Notario No. 2 de El Salto, Jalisco, Lic. Javier Alejandro Macías Preciado, una vez liquidado el precio.</p>
+<h3>Segunda. PRECIO Y FORMA DE PAGO</h3>
+<p>
+    El precio que <strong>"LAS PARTES"</strong> han pactado por concepto de contraprestación asciende a la cantidad de <strong>$801,620.40</strong> (Ochocientos un mil seiscientos veinte pesos 40/100 M.N.), el cual se establece por todo el <strong>"INMUEBLE"</strong> materia del Contrato, ya que la presente operación se realiza <em>"ad corpus"</em>, por lo que en el supuesto de que al verificarse la medición del mismo, éste resulte de mayor o menor superficie, el precio no sufrirá alteración, tal como disponen los artículos 1858 y 1860 del Código Civil para el Estado de Jalisco.
+</p>
+<p>
+    "LAS PARTES" convienen en que el precio será pagado de la siguiente forma:
+</p>
+<ol>
+    <li>
+        La cantidad de <strong>$360,729.18</strong> (Trescientos sesenta mil setecientos veintinueve pesos 18/100 M.N.), manifiesta “LA PROMITENTE VENDEDORA”, quien la recibe en este acto a su entera satisfacción, sirviendo el presente contrato de formal recibo por la entrega de dicha cantidad.
+    </li>
+</ol>
+<ol start="2">
+    <li>
+        El resto de la contraprestación, o sea, la cantidad de <strong>$342,102.75</strong> (Trescientos cuarenta y dos mil ciento dos pesos 75/100 M.N.), manifiesta “LA PROMITENTE VENDEDORA”, será pagada en la firma de escrituras.
+    </li>
+</ol>
 
-<p class="clausula"><strong>Cuarta. Entrega del Inmueble:</strong> La posesión se entrega al momento de firma del contrato. La parte compradora se obliga a respetar el uso de suelo habitacional campestre.</p>
+<p>
+    Si “LA PARTE VENDEDORA” incurre en gastos judiciales o extrajudiciales para realizar la cobranza de los pagos vencidos, en su caso, “LA PARTE COMPRADORA” estará obligada a reembolsarle dichos gastos a “LA PARTE VENDEDORA”.
+</p>
 
-<p class="clausula"><strong>Novena. Pena Convencional:</strong> El incumplimiento genera una pena del 20% del precio pactado.</p>
+<p>
+    El precio por la compraventa es en <strong>Moneda Nacional</strong>. En caso de expresarse en moneda extranjera, se estará al tipo de cambio que rija en el lugar y fecha en que se realice el pago, de conformidad con la legislación aplicable.
+</p>
 
-<p class="clausula"><strong>Décima Quinta. Competencia administrativa:</strong> En caso de disputa, las partes podrán acudir a la <strong>PROFECO</strong>.</p>
+<p>
+    Los conceptos de pago a cargo de la compradora deben ser cubiertos con el método de pago referido a continuación: <strong>Transferencia</strong>.
+</p>
 
-<p class="clausula"><strong>Décima Sexta. Jurisdicción:</strong> Las partes se someten a los tribunales competentes en Guadalajara, Jalisco.</p>
+<p>
+    Los pagos que realice la compradora, aun en forma extemporánea, que sean aceptados por la vendedora, liberan a la compradora de las obligaciones inherentes a dichos pagos.
+</p>
 
-<br>
+<p>
+    Los importes señalados en esta cláusula son todas las cantidades a cargo de la compradora por concepto de la compraventa, por lo que la vendedora se obliga a respetar en todo momento dicho costo.
+</p>
 
-<p>Leído que fue el contenido del presente contrato, lo firman las partes en Guadalajara, Jalisco, a {{ fecha_contrato }}.</p>
+<h3>Tercera. Revocación</h3>
+<p>
+    “LA PARTE COMPRADORA” cuenta con un plazo de <strong>5 días naturales</strong> contados a partir de la firma del contrato para revocar su consentimiento sobre la operación, sin responsabilidad alguna de su parte, mediante aviso por escrito, de conformidad con la cláusula décima quinta.
+</p>
+<p>
+    En caso de que la revocación se realice por correo certificado, registrado o servicio de mensajería, se tomará como fecha de revocación la de recepción para su envío.
+</p>
+<p>
+    Ante la cancelación de la compraventa, la vendedora se obliga a reintegrar todas las cantidades a la compradora por el mismo medio en que esta haya efectuado el pago, dentro de los <strong>15 días hábiles</strong> siguientes a la fecha en que le sea notificada la revocación.
+</p>
+<p>
+    En caso de anticipo, la vendedora lo devolverá a la compradora en el mismo número y monto de las exhibiciones mediante las cuales esta efectuó dicho pago, salvo pacto en contrario.
+</p>
 
-<div class="firma">
-  <p>______________________________<br><strong>“LA PARTE VENDEDORA”</strong><br>{{ nombre_vendedora }}</p>
+<h3>Cuarta. Firma de escritura pública</h3>
+<p>
+    Las partes acuerdan que, una vez liquidado la totalidad del precio de venta, concurrirán ante el Notario Público que en su momento designen, con el fin de otorgar y formalizar la escritura pública de compraventa. En dicho acto, la vendedora entregará a la compradora todos los documentos relativos al terreno que deban ser entregados conforme a la legislación aplicable.
+</p>
+<p>
+    Las partes acuerdan que el costo del avalúo inmobiliario, gastos de escrituración, honorarios, impuestos, derechos y comisiones o gastos aplicables por apertura de crédito, en su caso, que se causen con motivo del dicho acto, correrán a cuenta de <strong>la compradora</strong>, con excepción del <strong>impuesto sobre la renta</strong> que por Ley corresponde pagar a <strong>la vendedora</strong>, quien deberá cubrirlo a partir de dicha formalización.
+</p>
+
+<h3>Quinta. Entrega y recepción del inmueble</h3>
+<p>
+    La vendedora se obliga a entregar a la compradora la posesión del terreno materia del presente contrato, siendo ya obligación del comprador el pago del impuesto Predial desde este momento.
+</p>
+<p>
+    En caso de rescisión del presente contrato, “LA PARTE COMPRADORA” deberá restituir la posesión del inmueble a “LA PARTE VENDEDORA” dentro de un plazo no mayor a <strong>5 (cinco) días</strong> contados a partir de la fecha en que ocurra la rescisión.
+</p>
+<p>
+    Las partes convienen que, en caso de incumplimiento de “LA PARTE COMPRADORA” en cuanto a la restitución de la posesión dentro del plazo convenido, pagará a “LA PARTE VENDEDORA”, por concepto de pena convencional, una cantidad equivalente a <strong>9 veces la UMA</strong> (Unidad de Medida y Actualización) por cada día de retraso en la entrega de la posesión.
+</p>
+
+<h3>Sexta. Destino y modificación del inmueble</h3>
+<p>
+    La compradora se obliga a respetar el uso <strong>campestre habitacional</strong> del inmueble, por lo que le está prohibido instalar en el mismo cualquier tipo de comercio.
+</p>
+<p>
+    <strong>El terreno se encuentra en un fraccionamiento, condominio o conjunto habitacional.</strong> A fin de preservar el contorno urbanístico y arquitectónico del lugar en donde se encuentra ubicado el terreno, la compradora se obliga a obtener de las autoridades correspondientes las autorizaciones necesarias para realizar cualquier modificación.
+</p>
+<p>
+    El fraccionamiento, condominio o conjunto habitacional:
+</p>
+<ul>
+    <li>Cuenta con un Reglamento de adecuaciones o construcción, por lo que la compradora se obliga a respetar dicha normatividad, misma que se adjunta al presente como el <strong>“Anexo F”</strong>.</li>
+</ul>
+
+<h3>Séptima. Restricciones oficiales aplicables a la construcción en el terreno</h3>
+<p>
+    En su caso, el terreno objeto del contrato está sujeto a las siguientes restricciones oficiales aplicables a la construcción:
+</p>
+<ul>
+    <li><strong>Restricciones ambientales:</strong> No hay</li>
+    <li><strong>Colindancias con zonas ecológicas, reservas forestales y reservas federales:</strong> No hay</li>
+    <li><strong>Cualquier otra limitación decretada por las autoridades competentes y/o previstas en la legislación aplicable:</strong> No hay</li>
+</ul>
+
+<h3>Octava. Relación de los derechos y obligaciones de las partes</h3>
+<p>
+    Los derechos y obligaciones de las partes contractuales son los siguientes (listado enunciativo más no limitativo):
+</p>
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+
+
+<table style="width: 100%; border-collapse: collapse;" border="1">
+    <thead>
+        <tr>
+            <th colspan="2" style="padding: 10px; text-align: left;"><strong>Parte Vendedora</strong></th>
+        </tr>
+        <tr>
+            <th style="padding: 10px; text-align: left;"><strong>Derechos</strong></th>
+            <th style="padding: 10px; text-align: left;"><strong>Obligaciones</strong></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 10px;">
+                <ul>
+                    <li>Recibir por la entrega del inmueble objeto del contrato un precio cierto y en dinero.</li>
+                    <li>Recibir los pagos en el tiempo, lugar y forma acordados.</li>
+                </ul>
+            </td>
+            <td style="padding: 10px;">
+                <ul>
+                    <li>Brindar información y publicidad veraz, clara y actualizada del inmueble.</li>
+                    <li>Poner a disposición de la compradora la información y documentación del inmueble.</li>
+                    <li>No condicionar la compraventa a la contratación de servicios(s) adicional(es).</li>
+                    <li>Respetar el derecho de la compradora a cancelar la operación de consumo sin responsabilidad alguna dentro de los 5 días Naturales.</li>
+                    <li>Transferir la propiedad del inmueble a la compradora.</li>
+                    <li>Entregar a la compradora el inmueble en los términos y plazos acordados.</li>
+                    <li>Responsabilizarse de los daños y perjuicios ocasionados a la compradora si procede con dolo o mala fe en la contratación.</li>
+                    <li>Responder ante evicción o vicios ocultos.</li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+<table style="width: 100%; border-collapse: collapse;" border="1">
+    <thead>
+        <tr>
+            <th colspan="2" style="padding: 10px; text-align: left;"><strong>Parte Compradora</strong></th>
+        </tr>
+        <tr>
+            <th style="padding: 10px; text-align: left;"><strong>Derechos</strong></th>
+            <th style="padding: 10px; text-align: left;"><strong>Obligaciones</strong></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 10px;">
+                <ul>
+                    <li>Recibir información y publicidad veraz, clara y actualizada del inmueble.</li>
+                    <li>Recibir la información y documentación del inmueble.</li>
+                    <li>Cancelar la operación sin responsabilidad alguna dentro de los 5 días naturales posteriores a la firma del contrato.</li>
+                    <li>Recibir la propiedad del inmueble en los términos acordados.</li>
+                    <li>Exigir los daños y perjuicios ocasionados en caso de que la vendedora proceda con dolo o mala fe en la contratación.</li>
+                    <li>Ejercer acción civil ante la evicción o vicios ocultos.</li>
+                </ul>
+            </td>
+            <td style="padding: 10px;">
+                <ul>
+                    <li>Pagar por el inmueble objeto del contrato un precio cierto y en dinero.</li>
+                    <li>Pagar el precio en el tiempo, lugar y forma acordados.</li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+
+
+<h3>Novena. Pena convencional</h3>
+<p>
+    Las partes acuerdan que, en caso de incumplimiento de cualquiera de las obligaciones contraídas en el presente contrato, se aplicará una <strong>pena convencional del 20% (veinte por ciento)</strong> del precio total de compraventa establecido en la cláusula segunda, salvo indicación específica pactada en el presente contrato.
+</p>
+<p>
+    No podrá hacerse efectiva la pena cuando el obligado a ella no haya podido cumplir el contrato por hecho de su contraparte, caso fortuito o fuerza insuperable.
+</p>
+
+<h3>Décima. Rescisión</h3>
+<p>
+    Para el caso de que una de las partes no cumpliera las obligaciones a su cargo, sin necesidad de resolución judicial, el perjudicado podrá escoger entre exigir el cumplimiento o la resolución de la obligación, así como el pago de la pena convencional dispuesta en la cláusula Novena. Si se rescinde la venta, la vendedora y la compradora deben restituirse las prestaciones que se hubieren hecho.</p>
+<p>
+    Si el incumplimiento fuera a cargo de la vendedora, además de la pena señalada en la cláusula décima primera, deberá restituir a la compradora <strong>todas las cantidades pagadas</strong> por esta (de manera enunciativa, más no limitativa: el precio de compraventa, así como los pagos por concepto de gastos de escrituración, impuestos, avalúo, administración, apertura de crédito, erogaciones de investigación, costos por accesorios o complementos, entre otros).
+</p>
+<p>
+    Si el incumplimiento fuera a cargo de “LA PARTE COMPRADORA”, la vendedora podrá retener la pena convencional correspondiente a la cantidad entregada por la compradora.
+</p>
+<p>
+    La vendedora deberá restituir a la compradora los saldos excedentes a su favor por el mismo medio en que se haya efectuado el pago, <strong>dentro de los 15 días hábiles</strong> siguientes a la rescisión del contrato.
+</p>
+<p>
+    En caso de anticipo, la vendedora lo devolverá a la compradora en el mismo número y monto de las exhibiciones mediante las cuales efectuó dicho pago, salvo pacto en contrario.
+</p>
+<p>
+    En caso de que no se restituyeren las cantidades dentro del plazo establecido, se deberá pagar a la contraparte un <strong>interés moratorio del 3% mensual</strong> sobre la cantidad no devuelta por el tiempo que medie el retraso; interés que no debe resultar inequitativo, desproporcional, abusivo ni excesivo.
+</p>
+<p>
+    Si “LA PARTE VENDEDORA” hubiere entregado el inmueble vendido, tiene derecho a exigir a la compradora, por el uso de este, el pago de un alquiler o renta fijada.
+</p>
+<p>
+    En los casos de operaciones en que el precio deba cubrirse en exhibiciones periódicas, cuando “LA PARTE COMPRADORA” haya pagado más de la tercera parte del precio o del número total de los pagos convenidos y la vendedora exija la rescisión o cumplimiento del contrato por mora, la compradora tendrá el derecho a optar por la rescisión o por el pago del adeudo vencido más los intereses moratorios generados, de conformidad con los párrafos antepenúltimo y penúltimo de la cláusula segunda.
+</p>
+
+<h3>Décima Primera. Proceder en caso del fenecimiento de “LA PARTE COMPRADORA”</h3>
+<p>
+    En caso de fallecimiento de “LA PARTE COMPRADORA” antes de la firma de la escritura pública de compraventa, se presume que su(s) sucesor(es) legítimo(s) la sucede(n) en todos los derechos y obligaciones derivados del presente contrato, salvo que manifieste(n) a la vendedora su deseo de no continuar con la compraventa. En ese caso, la vendedora deberá restituirle(s) las cantidades que le hubiere pagado la compradora con motivo del presente contrato, menos la penalización acordada.
+</p>
+
+<h3>Décima Segunda. Notificaciones entre las partes</h3>
+<p>
+    Todas las notificaciones, requerimientos, autorizaciones, avisos o cualquier otra comunicación que deban darse las partes conforme a este contrato, deben hacerse por escrito y considerarse como debidamente entregadas si se encuentran firmadas por la respetiva parte contractual o su representante o apoderado legal y entregadas con acuse de recibo al destinatario o confirmación de recepción en:
+</p>
+
+<table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12pt;">
+    <tr style="background-color: #f8f8f8;">
+      <th style="font-weight: bold;">Parte vendedora</th>
+      <th style="font-weight: bold;">Parte compradora</th>
+    </tr>
+    <tr>
+      <td>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li>Domicilio Avenida Hidalgo 1443 PB Colonia Americana, Guadalajara, Jalisco. C.P. 44160</li>
+          <li>Correo electrónico: <a href="mailto:atencion@pinarestapalpa.com">atencion@pinarestapalpa.com</a></li>
+          <li>Teléfono 3338352159</li>
+        </ul>
+      </td>
+      <td>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li>Domicilio Calle Circuito Argo Num 117, Col. San Agustín, Tlajomulco de Zúñiga, Jalisco. C.P. 45645</li>
+          <li>Correo electrónico: <a href="mailto:mansoor1107@gmail.com">mansoor1107@gmail.com</a></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+  <br/>
+
+
+
+
+
+
+
+
+
+
+
+<h3>Décima Tercera. Canales de atención</h3>
+<p>
+    “LA PARTE VENDEDORA” cuenta con el siguiente canal de atención para recibir comentarios, sugerencias y quejas de la compradora:
+</p>
+
+<h3>Décima Cuarta. Datos personales</h3>
+<p>
+    Los datos personales que se obtengan por “LA PARTE VENDEDORA” deben ser tratados conforme a los principios de licitud, consentimiento, información, calidad, finalidad, lealtad, proporcionalidad y responsabilidad.
+</p>
+<p>
+    Para efectos de lo dispuesto en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares, “LA PARTE VENDEDORA” adjunta al presente contrato su Aviso de Privacidad en el <strong>“Anexo H”</strong>, en el cual informa al titular de los datos personales qué información recabará y con qué finalidades.
+</p>
+<p>
+    En caso de tratarse de <strong>datos personales sensibles</strong>, “LA PARTE VENDEDORA” debe obtener consentimiento expreso y por escrito del titular para su tratamiento. No podrán crearse bases de datos que contengan datos personales sensibles sin que se justifique la creación de las mismas para finalidades legítimas, concretas y acordes con las actividades o fines explícitos que persigue el sujeto regulado.
+</p>
+<p>
+    En caso de que los datos personales fueren obtenidos de manera indirecta del titular, se debe informar a los titulares de los datos personales que así lo soliciten cómo se dio la transferencia u obtención de dichos datos, y se deben observar las siguientes reglas:
+</p>
+<ul>
+    <li>
+        a. Si fueron tratados para una finalidad distinta prevista en una transferencia consentida, o si los datos fueron obtenidos de una fuente de acceso público, el aviso de privacidad debe ser dado a conocer a la compradora en el primer contacto que se tenga con ella.
+    </li>
+    <li>
+        b. Cuando la vendedora pretenda utilizar los datos para una finalidad distinta a la consentida, el aviso de privacidad debe ser actualizado y dado a conocer al titular previo al aprovechamiento de los datos personales.
+    </li>
+</ul>
+<p>
+    La persona titular de los datos personales o su representante legal podrá solicitar a la vendedora en cualquier momento el <strong>acceso, rectificación, cancelación u oposición</strong> respecto a sus datos personales y datos personales sensibles.
+</p>
+
+<h3>Décima Quinta. Competencia administrativa de la Procuraduría Federal del Consumidor (Profeco)</h3>
+<p>
+    Ante cualquier controversia que se suscite sobre la interpretación o cumplimiento del presente contrato, “LA PARTE COMPRADORA” puede acudir a la <strong>Profeco</strong>, la cual tiene funciones de autoridad administrativa encargada de promover y proteger los derechos e intereses de los consumidores y procurar la equidad y certeza jurídica en las relaciones de consumo desde su ámbito competencial.
+</p>
+<h3>Décima Sexta. Competencia de las autoridades jurisdiccionales</h3>
+<p>
+    Para resolver cualquier controversia que se suscite sobre la interpretación o cumplimiento del presente contrato, las partes se someten a las autoridades <strong>jurisdiccionales competentes de Guadalajara, Jalisco</strong>; renunciando expresamente a cualquier otra jurisdicción que pudiera corresponderles, por razón de sus domicilios presentes o futuros o cualquier otra razón.
+</p>
+
+<h3>Décima Séptima. Registro del modelo del contrato de adhesión</h3>
+<p>
+    El presente modelo del contrato de adhesión cuenta con el Registro Público de Contratos de Adhesión de la Profeco bajo el número: <strong>PFC.JAL.B11/00024-2222</strong>.
+</p>
+<p>
+    Cualquier diferencia entre el texto del contrato de adhesión registrado ante la Procuraduría y el utilizado en perjuicio de los consumidores, se tendrá por no puesta.
+</p>
+
+<p>
+    Leído que fue por las partes el contenido del presente contrato y sabedoras de su alcance legal, lo firman por duplicado el día <strong>28 de julio del 2023</strong> en la ciudad de Guadalajara, Jalisco. Por lo tanto, la vendedora está obligada a entregar un tanto del contrato y sus anexos originales y firmados a la compradora.
+</p>
+<br/>
+<br/>
+
+<table style="width: 100%; border-collapse: collapse; margin-top: 40px;">
+    <tbody>
+        <tr>
+            <td style="padding: 40px; text-align: center; vertical-align: middle;">
+                <br>
+                ____________________________<br>
+                Firma de "LA PARTE VENDEDORA".
+                <strong style="display: inline-block; margin-top: 10px;">ARCADIA PROMOTORA S. DE R.L DE C.V.</strong><br>
+                REPRESENTADA POR JAIME LARES RANGEL
+            </td>
+            <td style="padding: 40px; text-align: center; vertical-align: middle;">
+                ____________________________<br>
+                Firma de “LA PARTE COMPRADORA”.
+                <strong style="display: inline-block; margin-top: 10px;">MANSOOR ALI ALEEP</strong><br>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<br><br>
+
+<div class="firma" style="margin-top: 40px;">
+
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;____________________<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>GERENTE DE VENTAS</strong><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>JUAN PABLO LARES MONRAZ</strong></p>
 </div>
+<br><br><br>
 
-<div class="firma">
-  <p>______________________________<br><strong>“LA PARTE COMPRADORA”</strong><br>{{ comprador_nombre }}</p>
-</div>
+
+<p>
+    El presente contrato y sus anexos pueden signarse: de manera autógrafa original; o a través de una firma electrónica avanzada o fiable que será considerada para todos los efectos de la misma fuerza y consecuencia que la firma autógrafa original física de la parte firmante.
+</p>
+
+<p>
+    <strong>Autorización para la utilización de información con fines mercadotécnicos o publicitarios. -</strong> “LA PARTE COMPRADORA” si ( ) no ( ) acepta que la vendedora ceda o transmita a terceros, con fines mercadotécnicos publicitarios, la información proporcionada con motivo del presente contrato y si ( ) no ( ) acepta la vendedora le envié publicidad sobre viene su servicios.
+</p>
+
+<p><strong>Firma de “LA PARTE COMPRADORA”.</strong></p>
+
+<p>
+    Todo consumidor que no desee recibir publicidad por pate de los proveedores, en términos de la Ley Federal de Protección al Consumidor, puede inscribir de manera gratuita su número telefónico en el Registro Público del Consumidor (también denominado Registro Público para Evitar Publicidad) de la Profeco, a través del portal web <a href="https://repep.profeco.gob.mx/" target="_blank">https://repep.profeco.gob.mx/</a> o al 5596280000 (desde la Ciudad de México, Guadalajara y Monterrey) u 8009628000 (desde el resto de la República Mexicana).
+</p>
+
+<p>
+    Queda prohibido a los proveedores que utilicen información sobre consumidores con fines mercadotécnicos o publicitarios y a sus clientes, utilizar la información relativa a los consumidores con fines diferentes a los mercadotécnicos o publicitarios, así como enviar publicidad a los consumidores que expresamente les hubiere manifestado su voluntad de no recibirla o que estén inscritos en el registro Público de Consumidores (también denominado Registro Público para Evitar Publicidad). Los proveedores que sean objeto de publicidad son corresponsables del manejo de la información de consumidores cuando dicha publicidad la envíen a través de terceros.
+</p>
+
+
+<br/><br/><br/><br/><br/><br/><br/><br/>
+
+<h3>ACUERDO CON RESPECTO AL CONTRATO DE COMPRA VENTA DE TERRENO</h3>
+<br/><br/><br/><br/>
+
+<p><strong>LAS PARTES COMPRADORA Y VENDEDORA ACUERDAN</strong></p>
+<br/><br/>
+
+<p>
+Que una vez liquidado la totalidad del precio de venta concurrirán ante el Notario Público Número 2 del El Salto Jalisco, Lic. Javier Alejandro Macías Preciado, con el fin de otorgar y formalizar la escritura pública de compraventa.
+</p>
+
+<p><strong>Guadalajara Jal. 28 de JULIO del 2023.</strong></p>
+<br/><br/>
+
+
+<table style="width: 100%; border-collapse: collapse; margin-top: 40px;">
+    <tbody>
+        <tr>
+            <td style="padding: 40px; text-align: center; vertical-align: middle;">
+                <br>
+                ____________________________<br>
+                Firma de "LA PARTE VENDEDORA".
+                <strong style="display: inline-block; margin-top: 10px;">ARCADIA PROMOTORA S. DE R.L DE C.V.</strong><br>
+                REPRESENTADA POR JAIME LARES RANGEL
+            </td>
+            <td style="padding: 40px; text-align: center; vertical-align: middle;">
+                ____________________________<br>
+                Firma de “LA PARTE COMPRADORA”.
+                <strong style="display: inline-block; margin-top: 10px;">MANSOOR ALI ALEEP</strong><br>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 </body>
 </html>

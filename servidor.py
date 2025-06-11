@@ -803,13 +803,13 @@ def genera_pagare():
 @jwt_required()
 def genera_contrato():
     req= request.get_json()
-    mensualidad = req["total_pagare"] / req["plazo_meses"]
-    fecha = datetime.strptime(req["fecha_inicio"], '%Y-%m-%d').date()
-    fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
-    fecha_fin = fecha_final.strftime('%Y-%m-%d')
+    #mensualidad = req["total_pagare"] / req["plazo_meses"]
+    # fecha = datetime.strptime(req["fecha_inicio"], '%Y-%m-%d').date()
+    # fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
+    # fecha_fin = fecha_final.strftime('%Y-%m-%d')
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
 
-    mensualidad = round(mensualidad, 2)
+    #mensualidad = round(mensualidad, 2)
     context = {
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
