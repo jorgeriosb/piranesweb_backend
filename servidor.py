@@ -48,6 +48,36 @@ def numero_a_letras_mxn(cantidad):
     return f"{letras} pesos {parte_decimal:02d}/100 M.N."
 
 
+def fecha_a_letras(fecha):
+    [a,m,d] = fecha.split("-")
+    mes = ""
+    if m =="01":
+        mes ="Enero"
+    if m =="02":
+        mes ="Febrero"
+    if m =="03":
+        mes ="Marzo"
+    if m =="04":
+        mes ="Abril"
+    if m =="05":
+        mes ="Mayo"
+    if m =="06":
+        mes ="Junio"
+    if m =="07":
+        mes ="Julio"
+    if m =="08":
+        mes ="Agosto"
+    if m =="09":
+        mes ="Septiembre"
+    if m =="10":
+        mes ="Octubre"
+    if m =="11":
+        mes ="Noviembre"
+    if m =="12":
+        mes ="Diciembre"
+    return f"{d} de {mes} del {a}"
+
+
 
 
 connection = None
@@ -799,6 +829,7 @@ def genera_pagare():
     )
 
 
+
 @app.route('/api/contrato', methods=['POST'])
 @jwt_required()
 def genera_contrato():
@@ -810,15 +841,28 @@ def genera_contrato():
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
 
     #mensualidad = round(mensualidad, 2)
+    if req.get("estado_civil"):
+        if req["estado_civil"] ==0:
+            estadocivil="Soltero"
+        if req["estado_civil"] ==1:
+            estadocivil="Casado"
+        else:
+            estadocivil = "Desconocido"
+    else:
+        estadocivil = "Desconocido"
+    saldo_pendiente = float(req["precio_total"]) - (float(req.get("descuento", 0))+ float(req["anticipo"]))
     context = {
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
-        "superficie_m2":req["superficie_m2"],
-        "precio_total": req["precio_total"],
+        "superficie_m2":float(req["superficie_m2"]),
+        "precio_total": float(req["precio_total"]),
         "precio_total_letras": f"{numero_a_letras_mxn(req["precio_total"])}",
-        "anticipo": req["anticipo"],
-        "saldo_escritura": "342,102.75", #este no se de donde lo tengo que agarrar
+        "anticipo": float(req["anticipo"]),
+        "anticipo_letras": f"{numero_a_letras_mxn(req["anticipo"])}",
+        "saldo_escritura": saldo_pendiente, #este no se de donde lo tengo que agarrar
+        "saldo_escritura_letras": f"{numero_a_letras_mxn(str(saldo_pendiente))}",
         "fecha_contrato": fecha_hoy,
+        "fecha_letras": fecha_a_letras(fecha_hoy),
         "nombre_vendedora": "ARCADIA PROMOTORA S. DE R.L. DE C.V.",
         "lindero1": req["lindero1"],
         "lindero2": req["lindero2"],
@@ -828,6 +872,15 @@ def genera_contrato():
         "titulo2": req["titulo2"],
         "titulo3": req["titulo3"],
         "titulo4": req["titulo4"],
+        "numeroidentificacion": req["numeroidentificacion"],
+        "identificacion": req["identificacion"],
+        "comprador_edad": req["comprador_edad"],
+        "estado_civil" : estadocivil,
+        "comprador_domicilio": req["comprador_domicilio"],
+        "comprador_ciudad": req["comprador_ciudad"],
+        "comprador_estado":req["comprador_estado"],
+        "comprador_cp":req["comprador_cp"],
+        "comprador_colonia": req["comprador_colonia"]
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes

@@ -15,7 +15,7 @@
 <h1>CONTRATO DE COMPRAVENTA DE TERRENO</h1>
 
 <p>
-Contrato de adhesión de compraventa de terreno destinado a casa habitación, al que, en lo sucesivo, se le denominara <strong>“EL CONTRATO”</strong>, que celebran por una parte, la Sociedad Mercantil denominada <strong>ARCADIA PROMOTORA S. DE R.L. DE C.V.</strong>, quien comparece al presente acto jurídico a través de su Representante Legal el señor <strong>JAIME LARES RANGEL</strong>, a quien en lo sucesivo se le denominará, <strong>“LA PARTE VENDEDORA”</strong>, y por la otra <strong>MONICA POMAR VOLLRATH</strong> por su propio derecho a través. A quien en lo sucesivo se le denominará <strong>“LA PARTE COMPRADORA”</strong>; ambos sujetos contractuales que en su conjunto serán designadas como <strong>“LAS PARTES”</strong>.
+Contrato de adhesión de compraventa de terreno destinado a casa habitación, al que, en lo sucesivo, se le denominara <strong>“EL CONTRATO”</strong>, que celebran por una parte, la Sociedad Mercantil denominada <strong>ARCADIA PROMOTORA S. DE R.L. DE C.V.</strong>, quien comparece al presente acto jurídico a través de su Representante Legal el señor <strong>JAIME LARES RANGEL</strong>, a quien en lo sucesivo se le denominará, <strong>“LA PARTE VENDEDORA”</strong>, y por la otra <strong>{{comprador_nombre}}</strong> por su propio derecho a través. A quien en lo sucesivo se le denominará <strong>“LA PARTE COMPRADORA”</strong>; ambos sujetos contractuales que en su conjunto serán designadas como <strong>“LAS PARTES”</strong>.
 </p>
 
 <h2>Declaraciones</h2>
@@ -38,38 +38,12 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 </ul>
 <ul>
     <li>
-        <strong>e.</strong> Es legítima propietaria del terreno marcado con la Letra A del Módulo 110. Dicho inmueble tiene una superficie de <strong>1,585.50 m²</strong> y las siguientes medidas y linderos:
-        <table>
-            <thead>
-                <tr>
-                    <th>Orientación</th>
-                    <th>Medida</th>
-                    <th>Colindancia</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>NOR-PONIENTE</td>
-                    <td>52.00 m</td>
-                    <td>Lote 109 H</td>
-                </tr>
-                <tr>
-                    <td>NOR-ORIENTE</td>
-                    <td>40.48 m</td>
-                    <td>Donación Estatal</td>
-                </tr>
-                <tr>
-                    <td>SUR-ORIENTE</td>
-                    <td>52.00 m</td>
-                    <td>Lote 110 B</td>
-                </tr>
-                <tr>
-                    <td>SUR-PORIENTE</td>
-                    <td>22.58 m</td>
-                    <td>Vista del Bajío</td>
-                </tr>
-            </tbody>
-        </table>
+        <strong>e.</strong> Es legítima propietaria del terreno marcado con la Letra {{iden1}} del Módulo {{iden2}}. Dicho inmueble tiene una superficie de <strong>{{'{:20,.2f}'.format(superficie_m2)}} m²</strong> y las siguientes medidas y linderos:
+        <p>{{titulo1}}: {{lindero1}} <br>
+            {{titulo2}}: {{lindero2}} <br>
+            {{titulo3}}: {{lindero3}} <br>
+            {{titulo4}}: {{lindero4}} <br>
+        </p>
         <p>
             Ubicado en el Fraccionamiento denominado <strong>Pinares Tapalpa</strong>, en el Municipio de Tapalpa, Jalisco; como se acredita en términos de la Escritura Pública número 74,331 (setenta y cuatro mil trescientos treinta y uno) de fecha 21 de diciembre del año 2018, ante la fe del Notario Público 130 de Guadalajara, Jalisco, Licenciado Roberto Armando Orozco Alonso, y debidamente inscrita el día 29 de noviembre del año 1991 en el Folio Real 5728368 en el Registro Público de la Propiedad y de Comercio de Ciudad Guzmán, en el Estado de Jalisco.
         </p>
@@ -104,7 +78,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 <h3>II. Declara “LA PARTE COMPRADORA” que:</h3>
 <ul>
     <li>
-        <strong>a.</strong> Es de nacionalidad <strong>INDIA</strong>, acredita su identidad con su <strong>Credencial de Elector</strong> con número de folio (Instituto Nacional Electoral), tiene <strong>31 años</strong>; y su estado civil es <strong>Soltera</strong>.
+        <strong>a.</strong> Es de nacionalidad <strong>{{comprador_nacionalidad}}</strong>, acredita su identidad con su <strong>{{identificacion}}</strong> con número de folio {{numeroidentificacion}}, tiene <strong>{{comprador_edad}} años</strong>; y su estado civil es <strong>{{estado_civil}}</strong>.
     </li>
 </ul>
 
@@ -124,19 +98,19 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 
 <h3>Segunda. PRECIO Y FORMA DE PAGO</h3>
 <p>
-    El precio que <strong>"LAS PARTES"</strong> han pactado por concepto de contraprestación asciende a la cantidad de <strong>$801,620.40</strong> (Ochocientos un mil seiscientos veinte pesos 40/100 M.N.), el cual se establece por todo el <strong>"INMUEBLE"</strong> materia del Contrato, ya que la presente operación se realiza <em>"ad corpus"</em>, por lo que en el supuesto de que al verificarse la medición del mismo, éste resulte de mayor o menor superficie, el precio no sufrirá alteración, tal como disponen los artículos 1858 y 1860 del Código Civil para el Estado de Jalisco.
+    El precio que <strong>"LAS PARTES"</strong> han pactado por concepto de contraprestación asciende a la cantidad de <strong> ${{'{:20,.2f}'.format(precio_total)}}</strong> ({{precio_total_letras}}), el cual se establece por todo el <strong>"INMUEBLE"</strong> materia del Contrato, ya que la presente operación se realiza <em>"ad corpus"</em>, por lo que en el supuesto de que al verificarse la medición del mismo, éste resulte de mayor o menor superficie, el precio no sufrirá alteración, tal como disponen los artículos 1858 y 1860 del Código Civil para el Estado de Jalisco.
 </p>
 <p>
     "LAS PARTES" convienen en que el precio será pagado de la siguiente forma:
 </p>
 <ol>
     <li>
-        La cantidad de <strong>$360,729.18</strong> (Trescientos sesenta mil setecientos veintinueve pesos 18/100 M.N.), manifiesta “LA PROMITENTE VENDEDORA”, quien la recibe en este acto a su entera satisfacción, sirviendo el presente contrato de formal recibo por la entrega de dicha cantidad.
+        La cantidad de <strong>${{'{:20,.2f}'.format(anticipo)}}</strong> ({{anticipo_letras}}), manifiesta “LA PROMITENTE VENDEDORA”, quien la recibe en este acto a su entera satisfacción, sirviendo el presente contrato de formal recibo por la entrega de dicha cantidad.
     </li>
 </ol>
 <ol start="2">
     <li>
-        El resto de la contraprestación, o sea, la cantidad de <strong>$342,102.75</strong> (Trescientos cuarenta y dos mil ciento dos pesos 75/100 M.N.), manifiesta “LA PROMITENTE VENDEDORA”, será pagada en la firma de escrituras.
+        El resto de la contraprestación, o sea, la cantidad de <strong>${{'{:20,.2f}'.format(saldo_escritura)}}</strong> ({{saldo_escritura_letras}}), manifiesta “LA PROMITENTE VENDEDORA”, será pagada en la firma de escrituras.
     </li>
 </ol>
 
@@ -352,7 +326,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
       </td>
       <td>
         <ul style="margin: 0; padding-left: 20px;">
-          <li>Domicilio Calle Circuito Argo Num 117, Col. San Agustín, Tlajomulco de Zúñiga, Jalisco. C.P. 45645</li>
+          <li>{{comprador_domicilio}}, {{comprador_colonia}}, {{comprador_ciudad}}, {{comprador_estado}}, {{comprador_cp}} </li>
           <li>Correo electrónico: <a href="mailto:mansoor1107@gmail.com">mansoor1107@gmail.com</a></li>
         </ul>
       </td>
@@ -418,9 +392,8 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 </p>
 
 <p>
-    Leído que fue por las partes el contenido del presente contrato y sabedoras de su alcance legal, lo firman por duplicado el día <strong>28 de julio del 2023</strong> en la ciudad de Guadalajara, Jalisco. Por lo tanto, la vendedora está obligada a entregar un tanto del contrato y sus anexos originales y firmados a la compradora.
+    Leído que fue por las partes el contenido del presente contrato y sabedoras de su alcance legal, lo firman por duplicado el día <strong>{{fecha_letras}}</strong> en la ciudad de Guadalajara, Jalisco. Por lo tanto, la vendedora está obligada a entregar un tanto del contrato y sus anexos originales y firmados a la compradora.
 </p>
-<br/>
 <br/>
 
 <table style="width: 100%; border-collapse: collapse; margin-top: 40px;">
@@ -436,7 +409,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
             <td style="padding: 40px; text-align: center; vertical-align: middle;">
                 ____________________________<br>
                 Firma de “LA PARTE COMPRADORA”.
-                <strong style="display: inline-block; margin-top: 10px;">MANSOOR ALI ALEEP</strong><br>
+                <strong style="display: inline-block; margin-top: 10px;">{{comprador_nombre}}</strong><br>
             </td>
         </tr>
     </tbody>
@@ -483,7 +456,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 Que una vez liquidado la totalidad del precio de venta concurrirán ante el Notario Público Número 2 del El Salto Jalisco, Lic. Javier Alejandro Macías Preciado, con el fin de otorgar y formalizar la escritura pública de compraventa.
 </p>
 
-<p><strong>Guadalajara Jal. 28 de JULIO del 2023.</strong></p>
+<p><strong>Guadalajara Jal. {{fecha_letras}}.</strong></p>
 <br/><br/>
 
 
@@ -500,7 +473,7 @@ Que una vez liquidado la totalidad del precio de venta concurrirán ante el Nota
             <td style="padding: 40px; text-align: center; vertical-align: middle;">
                 ____________________________<br>
                 Firma de “LA PARTE COMPRADORA”.
-                <strong style="display: inline-block; margin-top: 10px;">MANSOOR ALI ALEEP</strong><br>
+                <strong style="display: inline-block; margin-top: 10px;">{{comprador_nombre}}</strong><br>
             </td>
         </tr>
     </tbody>
