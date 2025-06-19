@@ -108,11 +108,38 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
         La cantidad de <strong>${{'{:20,.2f}'.format(anticipo)}}</strong> ({{anticipo_letras}}), manifiesta “LA PROMITENTE VENDEDORA”, quien la recibe en este acto a su entera satisfacción, sirviendo el presente contrato de formal recibo por la entrega de dicha cantidad.
     </li>
 </ol>
+{% if forma_de_pago == "C" %}
+
 <ol start="2">
     <li>
         El resto de la contraprestación, o sea, la cantidad de <strong>${{'{:20,.2f}'.format(saldo_escritura)}}</strong> ({{saldo_escritura_letras}}), manifiesta “LA PROMITENTE VENDEDORA”, será pagada en la firma de escrituras.
     </li>
 </ol>
+
+{% endif %}
+
+{% if forma_de_pago == "R" %}
+
+<ol start="2">
+    <li>
+        El resto de la contraprestación o sea la cantidad de <strong>${{'{:20,.2f}'.format(saldo_escritura)}}</strong> ({{saldo_escritura_letras}}), la deberá(n) pagar "LA PARTE VENDEDORA" mediante {{plazo_meses}} amortizaciones mensuales, consecutivas sin intereses del día {{fecha_primer_pago}} al día {{fecha_fin}}, cada una por la cantidad de $ 14,409.58, (Catorce mil Cuatrocientos Nueve  Pesos 58/100 M.N.).
+    </li>
+</ol>
+
+<ol start="3">
+    <li>
+        Las amortizaciones mensuales a que se refiere el punto anterior, se documentan mediante pagaré(s) que en este acto suscribe "LA PARTE COMPRADORA" quien(es) está(n) de acuerdo en que dicho(s) título(s) de crédito sea(n) descontado(s) con terceras personas físicas o morales a elección de "LA PARTE VENDEDORA ".
+    </li>
+</ol>
+
+<ol start="4">
+    <li>
+        En caso de que "LA PARTE COMPRADORA" incurra(n) en mora en el pago de las amortizaciones se causarán intereses moratorios por todo el tiempo que se mantenga insoluto dicho pago a una tasa del 35 % anual.
+    </li>
+</ol>
+
+{% endif %}
+
 
 <p>
     Si “LA PARTE VENDEDORA” incurre en gastos judiciales o extrajudiciales para realizar la cobranza de los pagos vencidos, en su caso, “LA PARTE COMPRADORA” estará obligada a reembolsarle dichos gastos a “LA PARTE VENDEDORA”.

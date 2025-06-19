@@ -681,27 +681,7 @@ def otro():
 @app.route('/api/tablaamortizacion', methods=['POST'])
 @jwt_required()
 def genera_amortizacion():
-    req= request.get_json()
-    # id = req["inmueble"]
-    # precioxm2 = req["precio"]
-
-    # payload["formadepago"]=formFormaDePago.formadepago;
-    # payload["fechaprimerpago"]= formFormaDePago.fechaprimerpago
-    # payload["precio"] = formFormaDePago.preciocontado
-    # payload["enganche"] = formFormaDePago.enganche
-    # payload["descuento"] = formFormaDePago.descuento
-    # payload["fechaenganche"] = formFormaDePago.fechaenganche
-    # payload["saldoafinanciar"] = formFormaDePago.saldoafinanciar
-    # payload["inmueble_iden1"] = inmuebleData.iden1
-    # payload["inmueble_iden2"] = inmuebleData.iden2
-    # payload["inmueble_preciopormetro"]=inmuebleData.preciopormetro
-    # payload["inmueble_superficie"]=inmuebleData.superficie
-    # payload["mensualidades"]=0
-    # payload["interes_anual"] =0
-    # if(formFormaDePago.formadepago == "R"){
-    # payload["mensualidades"]=formFormaDePago.plazomeses
-    # payload["interes_anual"] =formFormaDePago.tasainteresanual
-    
+    req= request.get_json()    
 
     superficie = float(req["inmueble_superficie"])
     precio_m2 = float(req["inmueble_preciopormetro"])
@@ -834,13 +814,7 @@ def genera_pagare():
 @jwt_required()
 def genera_contrato():
     req= request.get_json()
-    #mensualidad = req["total_pagare"] / req["plazo_meses"]
-    # fecha = datetime.strptime(req["fecha_inicio"], '%Y-%m-%d').date()
-    # fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
-    # fecha_fin = fecha_final.strftime('%Y-%m-%d')
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-
-    #mensualidad = round(mensualidad, 2)
     if req.get("estado_civil"):
         if req["estado_civil"] ==0:
             estadocivil="Soltero"
@@ -851,6 +825,10 @@ def genera_contrato():
     else:
         estadocivil = "Desconocido"
     saldo_pendiente = float(req["precio_total"]) - (float(req.get("descuento", 0))+ float(req["anticipo"]))
+    if req.get("plazo_meses", 0) >0:
+        fecha = datetime.strptime(req["fecha_primer_pago"], '%Y-%m-%d').date()
+        fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
+        fecha_fin = fecha_final.strftime('%Y-%m-%d')
     context = {
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
@@ -880,11 +858,19 @@ def genera_contrato():
         "comprador_ciudad": req["comprador_ciudad"],
         "comprador_estado":req["comprador_estado"],
         "comprador_cp":req["comprador_cp"],
-        "comprador_colonia": req["comprador_colonia"]
+        "comprador_colonia": req["comprador_colonia"],
+        "fk_etapa":req["fk_etapa"],
+        "forma_de_pago": req["forma_de_pago"],
+        "plazo_meses": req["plazo_meses"],
+        "fecha_primer_pago": fecha_a_letras(req["fecha_primer_pago"]),
+        "fecha_fin": fecha_a_letras(fecha_fin)
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
-    rendered = render_template('contratoetapa5contado.html', **context)
+    if req["fk_etapa"] == 34:
+        rendered = render_template('contratoetapa5.html', **context)
+    if req["fk_etapa"] == 35:
+        rendered = render_template('contratoetapa6.html', **context)
 
     # PDFKit options
     options = {
@@ -902,6 +888,195 @@ def genera_contrato():
 
 
 
+@app.route('/api/amortizacion', methods=['POST'])
+@jwt_required()
+def guardar_amortizacion():
+    req= request.get_json()
+    mensualidad =0
+
+    superficie = float(req["superficie_m2"])
+    precio_m2 = float(req["inmueble_preciopormetro"])
+    enganche = float(req["enganche"])
+    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
+    mensualidades = int(req.get("plazo_meses",0))
+    descuento = float(req.get("descuento", 0))
+
+    # Calcular tabla de amortización
+    # Cálculos iniciales
+    saldo_a_financiar = superficie * precio_m2 - enganche
+    if descuento >0:
+        saldo_a_financiar-=descuento
+
+    interes_mensual = interes_anual / 100 / 12
+    total_a_pagar = 0
+    if req["forma_de_pago"] != "C":
+        if interes_mensual > 0:
+            mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
+        else:
+            mensualidad = saldo_a_financiar / mensualidades
+
+        mensualidad = round(mensualidad, 2)
+    
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    result = db.session.execute(text("""select max(pkamortizacion) from gixamortizacion"""))
+    codigo = result.fetchone()[0]
+    pk = codigo+1
+    llenado = {"pkamortizacion":pk, "fechacaptura":fecha_hoy, "fechaelaboracion":fecha_hoy, "formapago":req["forma_de_pago"], "fkcliente":req["fk_cliente"],
+        "fkvendedor":req["fkvendedor"], "fketapa":req["fk_etapa"], "fkinmueble":req["fkinmueble"], "tasainteresanual":req.get("interes_anual", 0),
+        "plazomeses":req.get("plazo_meses",0), "fechaprimerpago":req["fecha_primer_pago"], "preciocontado":float(req["precio_total"]), "descuentop":0,
+        "descuentoc":descuento, "enganchep":0, "enganchec":float(req["enganche"]), "fechaenganche":req["fechaenganche"],
+        "saldoafinanciar":saldo_a_financiar, "pagomensualfijo":mensualidad, "contrato":0, "cuenta":0
+        }
+    movimiento = GixAmortizacion(**llenado)
+    db.session.add(movimiento)
+    db.session.commit()
+    response = jsonify({"status":"good", "data":{"amortizacion":pk}})
+    return response
+    
+
+def crear_documento(doc, relaciondepago=None):
+    result = db.session.execute(text("""select max(codigo) from documento"""))
+    codigo = result.fetchone()[0]
+    pk_documento = codigo+1
+    doc["codigo"] = pk_documento
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    documento = Documento(**doc)
+    db.session.add(documento)
+    db.session.commit()
+    db.session.execute(text(f"""delete from movimiento where fk_documento={documento.codigo}"""))
+    result = db.session.execute(text("""select max(codigo) from movimiento"""))
+    codigo = result.fetchone()[0]
+    pk_movimiento = codigo+1
+    movimiento = Movimiento(**{"codigo":pk_movimiento, "cantidad":doc["cargo"], 
+        "fecha":fecha_hoy, "relaciondepago":relaciondepago,
+        "cargoabono":'C', "fechavencimientodoc":doc["fechadevencimiento"],
+        "fk_documento":documento.codigo, "fk_tipo":doc["fk_tipo"], "numrecibo":None })
+    db.session.add(movimiento)
+    db.session.commit()
+    return (documento, movimiento)
+    
+
+
+# necesito agregar estos al final
+# recibo = crear_recibo(pago, intereses, cantidad, req["referencia"], req["fecha"])
+#     if recibo:
+#         for documento in req["formData"]:
+#             pagar_documento(documento, req["fecha"], recibo)
+
+def generar_documentos(req, cuenta):
+    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
+    mensualidades = int(req.get("plazo_meses",0))
+    mensualidad =0
+    interes_mensual = interes_anual / 100 / 12
+    enganche = float(req["enganche"])
+    superficie = float(req["superficie_m2"])
+    precio_m2 = float(req["inmueble_preciopormetro"])
+    enganche = float(req["enganche"])
+    descuento = float(req.get("descuento", 0))
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    fecha_vencimiento = (datetime.today() + timedelta(days=10)).strftime("%Y-%m-%d")
+    precio_total = superficie * precio_m2
+
+    documentos_recibo= []
+
+
+    #aqui  hago el enganche
+    llenado_enganche = {"fechadeelaboracion":fecha_hoy,
+        "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
+        "saldo":enganche, "cargo":enganche, "abono":0, "fk_cuenta":cuenta, "fk_tipo":1
+    }
+    (enganche_documento, enganche_movimiento) = crear_documento(llenado_enganche)
+    documentos_recibo.append(enganche_documento)
+    saldo_a_financiar = superficie * precio_m2 - enganche
+
+
+    #sigue el documento de descuento
+    if descuento >0:
+        saldo_a_financiar-=descuento
+        llenado_descuento = {"fechadeelaboracion":fecha_hoy,
+        "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
+        "saldo":descuento, "cargo":descuento, "abono":0, "fk_cuenta":cuenta, "fk_tipo":15
+        }
+        (descuento_documento, descuento_movimiento) = crear_documento(llenado_descuento)
+        documentos_recibo.append(descuento_documento)
+        #crear_movimiento_abono({"cantidad":descuento, "fecha":fecha_hoy, })
+
+    #el resto del pago    
+    if req["forma_de_pago"] != "C": # C=Contado R=credito
+        if interes_mensual > 0:
+            mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
+        else:
+            mensualidad = saldo_a_financiar / mensualidades
+        mensualidad = round(mensualidad, 2)
+
+        #falta la logica de hacer los documentos de cada mensualidad para poder hacer el recibo 
+
+   
+    else:
+        llenado_contado = {"fechadeelaboracion":fecha_hoy,
+            "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
+            "saldo":saldo_a_financiar, "cargo":saldo_a_financiar, "abono":0, "fk_cuenta":cuenta, "fk_tipo":2
+            }
+        (resto_documento, resto_movimiento) = crear_documento(llenado_contado)
+        #documentos_recibo.append(resto_documento)
+        
+        recibo = crear_recibo(saldo_a_financiar+enganche, 0, saldo_a_financiar+enganche, '', fecha_hoy)
+        for doc in documentos_recibo:
+            valor ={"id": doc.codigo, "cantidad": doc.saldo, "fechadevencimiento":doc.fechadevencimiento}
+            pagar_documento(valor, fecha_hoy, recibo)
+        
+        #aqui solo falta generar el recibo para imprimirlo como respuesta de la funcion
+
+
+
+
+
+
+
+@app.route('/api/cuenta', methods=['POST'])
+@jwt_required()
+def guardar_cuenta():
+    req= request.get_json()
+    result = db.session.execute(text("""select max(codigo) from cuenta"""))
+    codigo = result.fetchone()[0]
+    pk_cuenta = codigo+1
+    superficie = float(req["superficie_m2"])
+    precio_m2 = float(req["inmueble_preciopormetro"])
+    enganche = float(req["enganche"])
+    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
+    mensualidades = int(req.get("plazo_meses",0))
+    descuento = float(req.get("descuento", 0))
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    mensualidad =0
+
+    # Calcular tabla de amortización
+    # Cálculos iniciales
+    precio_total = superficie * precio_m2
+    # saldo_a_financiar = superficie * precio_m2 - enganche
+    # if descuento >0:
+    #     saldo_a_financiar-=descuento
+
+    # interes_mensual = interes_anual / 100 / 12
+    # total_a_pagar = 0
+    # if req["forma_de_pago"] != "C":
+    #     if interes_mensual > 0:
+    #         mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
+    #     else:
+    #         mensualidad = saldo_a_financiar / mensualidades
+
+    #     mensualidad = round(mensualidad, 2)
+
+    llenado_cuenta = {"codigo":pk_cuenta, "fecha":fecha_hoy, "saldo":precio_total, "fk_cliente":req["fk_cliente"], "fk_inmueble":req["fkinmueble"], "fk_tipo_cuenta":1, "congelada":0}
+    movimiento = Cuenta(**llenado_cuenta)
+    db.session.add(movimiento)
+    db.session.commit()
+    amortizacion = db.session.execute(db.select(GixAmortizacion).filter_by(pkamortizacion=req["amortizacion"])).scalar_one()
+    amortizacion.cuenta=pk_cuenta
+    db.session.commit()
+    generar_documentos(req, pk_cuenta)
+
+    response = jsonify({"status":"good", "data":{"cuenta":pk_cuenta}})
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
