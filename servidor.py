@@ -23,7 +23,8 @@ from num2words import num2words
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import func
 from sqlalchemy import extract
-
+from collections import defaultdict
+import calendar
 
 
 
@@ -1155,6 +1156,41 @@ def get_sold_inmuebles_by_month(year: int, month: int):
     )
 
     return [inmueble.as_dict() for inmueble in results]
+
+
+@app.route('/api/resumen2', methods=['GET'])
+@jwt_required()
+def resumen2():
+    results = (
+    db.session.query(
+        func.date_trunc('month', GixAmortizacion.fechaelaboracion).label('month'),
+        func.count(func.distinct(GixAmortizacion.fkinmueble)).label('sold_count')
+    )
+    .filter(GixAmortizacion.fkinmueble.isnot(None))
+    .group_by(func.date_trunc('month', GixAmortizacion.fechaelaboracion))
+    .order_by(func.date_trunc('month', GixAmortizacion.fechaelaboracion))
+    .all()
+    )
+    yearly_data = defaultdict(lambda: {month: 0 for month in range(1, 13)})
+    for row in results:
+        year = row.month.year
+        month = row.month.month
+        yearly_data[year][month] = row.sold_count
+    values = []
+    month_names_es = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    for i, (year, months) in enumerate(sorted(yearly_data.items())):
+        row = {'id': i, 'year': year}
+        total = 0
+        for idx, name in enumerate(month_names_es, start=1):
+            count = months[idx]
+            row[name] = count
+            total += count
+        row['Total'] = total
+        values.append(row)
+    
+    response = jsonify({"status":"good", "data":values})
+    return response
+
 
 @app.route('/api/resumen/<path:fecha>')
 @jwt_required()
