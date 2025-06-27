@@ -567,6 +567,7 @@ def get_gixamortizacion(id):
 
 
 def crear_recibo(pago, intereses, total, referencia, fecha):
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
     result = db.session.execute(text("""select max(codigo) from recibo"""))
     codigo = result.fetchone()[0]
     nummovimiento = db.session.execute(text("""select max(numrecibo) from movimiento"""))
@@ -576,7 +577,7 @@ def crear_recibo(pago, intereses, total, referencia, fecha):
         codigo = num+1
     llenado = {"codigo":codigo, "fechaemision":fecha, "abonocapital":pago, 
         "interesmoratorio":intereses, "totalrecibo":total, "referencia":referencia,
-        "status":"A", "fk_desarrollo":5, "fechaaplicacion":fecha}
+        "status":"A", "fk_desarrollo":5, "fechaaplicacion":fecha_hoy}
     recibo = Recibo(**llenado)
     db.session.add(recibo)
     db.session.commit()
