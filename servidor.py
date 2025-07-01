@@ -856,14 +856,17 @@ def genera_pagare():
 def genera_contrato():
     req= request.get_json()
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    estadocivil = ""
     if req.get("estado_civil"):
-        if req["estado_civil"] ==0:
+        print("entro ", req["estado_civil"])
+        if req["estado_civil"] =="0":
+            print("aqui")
             estadocivil="Soltero"
-        if req["estado_civil"] ==1:
+        if req["estado_civil"] =="1":
+            print("aca")
             estadocivil="Casado"
-        else:
-            estadocivil = "Desconocido"
     else:
+        print("jjeje")
         estadocivil = "Desconocido"
     saldo_pendiente = float(req["precio_total"]) - (float(req.get("descuento", 0))+ float(req["anticipo"]))
     if req.get("plazo_meses", 0) >0:
@@ -895,6 +898,8 @@ def genera_contrato():
         "titulo2": req["titulo2"],
         "titulo3": req["titulo3"],
         "titulo4": req["titulo4"],
+        "iden1": req["iden1"],
+        "iden2": req["iden2"],
         "numeroidentificacion": req["numeroidentificacion"],
         "identificacion": req["identificacion"],
         "comprador_edad": req["comprador_edad"],
@@ -916,9 +921,16 @@ def genera_contrato():
         rendered = render_template('contratoetapa5.html', **context)
     if req["fk_etapa"] == 35:
         rendered = render_template('contratoetapa6.html', **context)
+    header_html = render_template("logo.html")
+    with open("temp_header.html", "w", encoding="utf-8") as f:
+        f.write(header_html)
 
     # PDFKit options
     options = {
+        'margin-top': '35mm',
+        'encoding': 'UTF-8',
+        'header-html': 'temp_header.html',
+        'header-spacing': '5',  # space between header and content
         'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
