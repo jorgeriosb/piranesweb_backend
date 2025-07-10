@@ -355,7 +355,7 @@ class Recibo(db.Model):
 def login():
     username = request.json.get("usuario", None)
     password = request.json.get("password", None)
-    if username != "test" or password != "test":
+    if username not in ["luz", "malr", "eli"] or password not in ["test", "mexsoros1969", "jgq8928o"]:
         return jsonify({"msg": "Bad username or password"}), 401
 
     access_token = create_access_token(identity=username, expires_delta=False)
@@ -437,6 +437,21 @@ def add_cliente():
         db.session.add(cliente)
         db.session.commit()
     return jsonify({"status":"good", "data":cliente.as_dict()})
+
+@app.route('/api/clientes/<int:id>', methods=['PUT'])
+@jwt_required()
+def actualizar_cliente(id):
+    new_cliente = request.get_json()
+    new_cliente = validaCliente(new_cliente)
+    print("viendo cliente ", new_cliente)
+    cliente = Cliente.query.get(id)
+    if not cliente:
+        return jsonify({'message': 'User not found'}), 404
+    Cliente.query.filter_by(codigo=id).update(new_cliente)
+    db.session.commit()
+    cliente = Cliente.query.get(id)
+    return jsonify({"status":"good", "data":cliente.as_dict()})
+    
 
 
 def get_tipo_documento(id):
