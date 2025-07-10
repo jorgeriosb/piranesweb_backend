@@ -164,7 +164,12 @@ class GixAmortizacion(db.Model):
     cuenta = db.Column(db.Integer)
 
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            result[column.name] = value
+        result["id"]=getattr(self, "pkamortizacion")
+        return result
 
 
 class Cliente(db.Model):
@@ -913,7 +918,8 @@ def genera_contrato():
         "forma_de_pago": req["forma_de_pago"],
         "plazo_meses": req.get("plazo_meses", 0),
         "fecha_primer_pago": fecha_a_letras(req["fecha_primer_pago"]),
-        "fecha_fin": fecha_a_letras(fecha_fin)
+        "fecha_fin": fecha_a_letras(fecha_fin),
+        "comprador_email":req.get("comprador_email", "")
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -982,7 +988,7 @@ def guardar_amortizacion():
         "fkvendedor":req["fkvendedor"], "fketapa":req["fk_etapa"], "fkinmueble":req["fkinmueble"], "tasainteresanual":req.get("interes_anual", 0),
         "plazomeses":req.get("plazo_meses",0), "fechaprimerpago":req["fecha_primer_pago"], "preciocontado":float(req["precio_total"]), "descuentop":0,
         "descuentoc":descuento, "enganchep":0, "enganchec":float(req["enganche"]), "fechaenganche":req["fechaenganche"],
-        "saldoafinanciar":saldo_a_financiar, "pagomensualfijo":mensualidad, "contrato":0, "cuenta":0
+        "saldoafinanciar":saldo_a_financiar, "pagomensualfijo":mensualidad, "contrato":0, "cuenta":None
         }
     movimiento = GixAmortizacion(**llenado)
     db.session.add(movimiento)
@@ -1136,6 +1142,31 @@ def guardar_cuenta():
     response = jsonify({"status":"good", "data":{"cuenta":pk_cuenta}})
     return response
 
+def get_detalle_amortizacion(amortizacion):
+    inmueble = Inmueble.query.get(amortizacion["fkinmueble"])
+    cliente = Cliente.query.get(amortizacion["fkcliente"])
+    amortizacion["inmueble"] = inmueble.as_dict()
+    amortizacion["cliente"] = cliente.as_dict()
+    return amortizacion
+
+@app.route('/api/amortizacionsincuenta', methods=['GET'])
+@jwt_required()
+def amortizacion_disponible():
+    amortizaciones = [x.as_dict() for x in GixAmortizacion.query.filter(GixAmortizacion.cuenta.is_(None)).order_by(GixAmortizacion.pkamortizacion).all()]
+    good_values = list(map(lambda x: get_detalle_amortizacion(x), amortizaciones))
+    response = jsonify(amortizaciones)
+    return response
+
+@app.route('/api/amortizacion/<int:id>', methods=['GET'])
+@jwt_required()
+def amortizacion_id(id):
+    amortizacion = GixAmortizacion.query.get(id)
+    if not amortizacion:
+        return jsonify({"error": "inmueble not found"}), 404
+    response  =jsonify(amortizacion.as_dict())
+    return response
+
+
 
 @app.route('/api/resumen', methods=['GET'])
 @jwt_required()
@@ -1212,6 +1243,23 @@ def get_resumen_fecha(fecha):
     records = get_sold_inmuebles_by_month(int(y), int(m))
     response = jsonify({"status":"good", "data":records})
     return response
+
+
+@app.route('/api/saldos')
+@jwt_required()
+def get_saldos():
+    inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
+    #volver a regresar a todfas las etapas
+    inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+
+    print("disponibles len", len(inmuebles_disponibles))
+    inmuebles_vendidos = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
+    #print("vendidos ", inmuebles_vendidos)
+    response = jsonify({"status":"good", "data":{"disponibles":inmuebles_disponibles, "vendidos":inmuebles_vendidos}})
+    return response
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
