@@ -25,6 +25,8 @@ from sqlalchemy import func
 from sqlalchemy import extract
 from collections import defaultdict
 import calendar
+from functools import reduce
+
 
 
 
@@ -1248,14 +1250,35 @@ def get_resumen_fecha(fecha):
 @app.route('/api/saldos')
 @jwt_required()
 def get_saldos():
+    total_etapa34 =0
+    total_etapa35 = 0
+    total_vendido_34 =0
+    total_vendido_35 =0
     inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
-    #volver a regresar a todfas las etapas
-    inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+    inmuebles_disponibles_34 = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([34])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+    inmuebles_disponibles_35 = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+    if inmuebles_disponibles_34:
+        for x in inmuebles_disponibles_34:
+            valor = x.get("precio", 0)
+            total_etapa34+=valor if valor != None else 0
+    if inmuebles_disponibles_35:
+        for x in inmuebles_disponibles_35:
+            valor = x.get("precio", 0)
+            total_etapa35+=valor if valor != None else 0
 
-    print("disponibles len", len(inmuebles_disponibles))
-    inmuebles_vendidos = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
-    #print("vendidos ", inmuebles_vendidos)
-    response = jsonify({"status":"good", "data":{"disponibles":inmuebles_disponibles, "vendidos":inmuebles_vendidos}})
+
+    inmuebles_vendidos_34 = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([34])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
+    for x in inmuebles_vendidos_34:
+            valor = x.get("precio", 0)
+            total_vendido_34+=valor if valor != None else 0
+    
+    inmuebles_vendidos_35 = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
+    for x in inmuebles_vendidos_35:
+            valor = x.get("precio", 0)
+            total_vendido_35+=valor if valor != None else 0
+
+    response = jsonify({"Disponible Etapa 5": '${:20,.2f}'.format(total_etapa34), "Disponible Etapa 6": '${:20,.2f}'.format(total_etapa35),
+                        "Vendido Etapa 5": '${:20,.2f}'.format(total_vendido_34), "Vendido Etapa 6": '${:20,.2f}'.format(total_vendido_35)})
     return response
 
 
