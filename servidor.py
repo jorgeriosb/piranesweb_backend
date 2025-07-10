@@ -346,6 +346,21 @@ class Recibo(db.Model):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
+
+class Proveedor(db.Model):
+    __tablename__ = 'proveedor'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String)
+    cuentabancaria = db.Column(db.String)
+    clabe = db.Column(db.String)
+    domicilio = db.Column(db.String)
+    telefono = db.Column(db.String)
+    rfc = db.Column(db.String)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 # aqui arriba estan los modelos
 
 
@@ -355,7 +370,7 @@ class Recibo(db.Model):
 def login():
     username = request.json.get("usuario", None)
     password = request.json.get("password", None)
-    if username not in ["luz", "malr", "eli"] or password not in ["test", "mexsoros1969", "jgq8928o"]:
+    if username not in ["luz", "malr", "eli"] or password not in ["test", "mexsoros1969", "jgq8928o", "Pinares1443"]:
         return jsonify({"msg": "Bad username or password"}), 401
 
     access_token = create_access_token(identity=username, expires_delta=False)
@@ -693,6 +708,7 @@ def download_recibo(id):
 def get_inmuebles_disponibles():
     inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
     inmuebles_disponibles = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([8,9,10,33,34,35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
+    print("cuantos hay ", len(inmuebles_disponibles))
     response = jsonify(inmuebles_disponibles)
     return response
 
@@ -1294,6 +1310,14 @@ def get_saldos():
 
     response = jsonify({"Disponible Etapa 5": '${:20,.2f}'.format(total_etapa34), "Disponible Etapa 6": '${:20,.2f}'.format(total_etapa35),
                         "Vendido Etapa 5": '${:20,.2f}'.format(total_vendido_34), "Vendido Etapa 6": '${:20,.2f}'.format(total_vendido_35)})
+    return response
+
+
+@app.route('/api/proveedor', methods=['GET'])
+@jwt_required()
+def get_proveedores():
+    proveedores = [x.as_dict for x in Proveedor.query.all()]
+    response = jsonify(inmuebles_disponibles)
     return response
 
 
