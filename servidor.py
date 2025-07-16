@@ -361,6 +361,34 @@ class Proveedor(db.Model):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
+
+class Departamento(db.Model):
+    __tablename__ = 'departamento'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+class Solicitud(db.Model):
+    __tablename__ = 'solicitud'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fk_proveedor = db.Column(db.Integer, nullable=False)
+    descripcion = db.Column(db.String, nullable=False)
+    fk_departamento = db.Column(db.Integer, nullable=False)
+    cantidad = db.Column(db.Float, nullable=False)
+    fechapago = db.Column(db.Date)
+    fechaelaboracion = db.Column(db.Date)
+    estatus = db.Column(db.String, nullable=False)
+
+    
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 # aqui arriba estan los modelos
 
 
@@ -887,6 +915,77 @@ def genera_pagare():
         download_name='pagare.pdf'
     )
 
+@app.route('/api/solicitud', methods=['POST'])
+@jwt_required()
+def genera_solicitud():
+    req= request.get_json()
+    print("viendo request ", req)
+    solicitud = Solicitud(**req)
+    db.session.add(solicitud)
+    db.session.commit()
+    proveedor = Proveedor.query.get(req["fk_proveedor"])
+    departamento = Departamento.query.get(req["fk_departamento"])
+    context = {
+        "descripcion": req["descripcion"], 'cantidad': req["cantidad"], 'fechapago': req["fechapago"],
+         'fechaelaboracion':req["fechaelaboracion"], 'proveedor': proveedor, 'departamento': departamento
+    }
+    # Generate PDF in memory
+    #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    rendered = render_template('solicitud.html', **context)
+
+    # PDFKit options
+    options = {
+        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+    }
+
+    # Generate PDF
+    pdf = pdfkit.from_string(rendered, False, options=options)
+    response = make_response(send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='solicitud.pdf'
+    ))
+    response.headers['X-Custom-Value'] = solicitud.id
+    response.headers['Access-Control-Expose-Headers'] = 'X-Custom-Value'
+    return response
+
+def get_detail(solicitud):
+    pro = Proveedor.query.get(solicitud["fk_proveedor"])
+    solicitud["proveedor"]=pro.nombre
+    dep = Departamento.query.get(solicitud["fk_departamento"])
+    solicitud["departamento"] = dep.nombre
+    return solicitud
+
+@app.route('/api/solicitudes', methods=['GET'])
+@jwt_required()
+def get_solicitudes():
+    solicitudes = [x.as_dict() for x in Solicitud.query.all()]
+    good = list(map(lambda x: get_detail(x), solicitudes))
+    response = jsonify(good)
+    return response
+
+@app.route('/api/solicitud/<int:id>', methods=['GET'])
+@jwt_required()
+def solicitud_id(id):
+    solicitud = Solicitud.query.get(id)
+    if not solicitud:
+        return jsonify({"error": "solicitud not found"}), 404
+    response  =jsonify(solicitud.as_dict())
+    return response
+
+@app.route('/api/solicitud/<int:id>', methods=['PUT'])
+@jwt_required()
+def actualizar_solicitud(id):
+    req = request.get_json()
+    solicitud = Solicitud.query.get(id)
+    if not solicitud:
+        return jsonify({'message': 'solicitud not found'}), 404
+    Solicitud.query.filter_by(id=id).update(req)
+    db.session.commit()
+    sol = Solicitud.query.get(id)
+    return jsonify({"status":"good", "data":sol.as_dict()})
+
 
 
 @app.route('/api/contrato', methods=['POST'])
@@ -1285,6 +1384,8 @@ def get_saldos():
     total_etapa35 = 0
     total_vendido_34 =0
     total_vendido_35 =0
+    total_descuento_34=0
+    total_descuento_35=0
     inmueble_cuenta = [x.fk_inmueble for x in Cuenta.query.with_entities(Cuenta.fk_inmueble).all()]
     inmuebles_disponibles_34 = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([34])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
     inmuebles_disponibles_35 = [x.as_dict() for x in Inmueble.query.filter(~Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.iden2, Inmueble.iden1).all()]
@@ -1301,23 +1402,40 @@ def get_saldos():
     inmuebles_vendidos_34 = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([34])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
     for x in inmuebles_vendidos_34:
             valor = x.get("precio", 0)
+            cuenta = db.session.execute(db.select(Cuenta).filter_by(fk_inmueble=x["codigo"])).scalar_one()
+            amortizacion = db.session.execute(db.select(GixAmortizacion).filter_by(cuenta=cuenta.codigo)).scalar_one()
             total_vendido_34+=valor if valor != None else 0
+            total_descuento_34+= valor-amortizacion.descuentoc
+            
     
     inmuebles_vendidos_35 = [x.as_dict() for x in Inmueble.query.filter(Inmueble.codigo.in_(inmueble_cuenta), Inmueble.fk_etapa.in_([35])).order_by(Inmueble.codigo, Inmueble.iden1).all()]
     for x in inmuebles_vendidos_35:
             valor = x.get("precio", 0)
+            cuenta = db.session.execute(db.select(Cuenta).filter_by(fk_inmueble=x["codigo"])).scalar_one()
+            print("iendo cuenta ", cuenta)
+            amortizacion = db.session.execute(db.select(GixAmortizacion).filter_by(cuenta=cuenta.codigo)).scalar_one()
             total_vendido_35+=valor if valor != None else 0
+            total_descuento_35+= valor-amortizacion.descuentoc
 
     response = jsonify({"Disponible Etapa 5": '${:20,.2f}'.format(total_etapa34), "Disponible Etapa 6": '${:20,.2f}'.format(total_etapa35),
-                        "Vendido Etapa 5": '${:20,.2f}'.format(total_vendido_34), "Vendido Etapa 6": '${:20,.2f}'.format(total_vendido_35)})
+                        "Vendido Etapa 5 (Contratado)": '${:20,.2f}'.format(total_vendido_34), "Vendido Etapa 6 (Contratado)": '${:20,.2f}'.format(total_vendido_35),
+                        "Vendido Etapa 5 (Vendido)": '${:20,.2f}'.format(total_descuento_34), "Vendido Etapa 6 (Vendido)": '${:20,.2f}'.format(total_descuento_35)},
+                        )
     return response
 
 
 @app.route('/api/proveedor', methods=['GET'])
 @jwt_required()
 def get_proveedores():
-    proveedores = [x.as_dict for x in Proveedor.query.all()]
-    response = jsonify(inmuebles_disponibles)
+    proveedores = [x.as_dict() for x in Proveedor.query.all()]
+    response = jsonify(proveedores)
+    return response
+
+@app.route('/api/departamento', methods=['GET'])
+@jwt_required()
+def get_departamentos():
+    departamentos = [x.as_dict() for x in Departamento.query.all()]
+    response = jsonify(departamentos)
     return response
 
 
