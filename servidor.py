@@ -472,7 +472,7 @@ def add_cliente():
         db.session.add(cliente)
         db.session.commit()    
     else:
-        new_cliente.pop("clienteNuevo")
+        #new_cliente.pop("clienteNuevo")
         cliente_find = Cliente.query.get(new_cliente.get('codigo'))
         if cliente_find:
             return jsonify({"status": "error", "message":"Ya existe ese codigo"}), 400
