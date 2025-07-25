@@ -1207,10 +1207,9 @@ def generar_documentos(req, cuenta):
             mensualidad = saldo_a_financiar / mensualidades
         mensualidad = round(mensualidad, 2)
         print("viendo esto ", req["fecha_primer_pago"])
-        fecha_inicio = "2024-09-09"
+        fecha_inicio = datetime.strptime(req["fecha_primer_pago"], "%a, %d %b %Y %H:%M:%S GMT")
         for i in range(1, mensualidades + 1):
-            fecha_vencimiento = (fecha_inicio + relativedelta(months=i-1)).strftime("%d-%m-%Y")
-            print("viendo ", fecha_vencimiento)
+            fecha_vencimiento = (fecha_inicio + relativedelta(months=i - 1))
             llenado_contado = {"fechadeelaboracion":fecha_hoy,
             "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
             "saldo":mensualidad, "cargo":mensualidad, "abono":0, "fk_cuenta":cuenta, "fk_tipo":2
