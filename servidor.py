@@ -26,6 +26,8 @@ from sqlalchemy import extract
 from collections import defaultdict
 import calendar
 from functools import reduce
+from dateutil.relativedelta import relativedelta
+
 
 
 
@@ -398,7 +400,7 @@ class Solicitud(db.Model):
 def login():
     username = request.json.get("usuario", None)
     password = request.json.get("password", None)
-    if username not in ["luz", "malr", "eli"] or password not in ["test", "mexsoros1969", "jgq8928o", "Pinares1443"]:
+    if username not in ["luz", "malr", "eli", "test"] or password not in ["test2", "mexsoros1969", "jgq8928o", "Pinares1443"]:
         return jsonify({"msg": "Bad username or password"}), 401
 
     access_token = create_access_token(identity=username, expires_delta=False)
@@ -795,7 +797,8 @@ def genera_amortizacion():
     if formadepago == "R":
         tabla = []
         saldo = saldo_a_financiar
-        fecha_inicio = datetime.today() # falta esto de fechas
+        fecha_inicio = datetime.strptime(req["fechaprimerpago"], "%Y-%m-%d")    #datetime.today() # falta esto de fechas
+
         for i in range(1, mensualidades + 1):
             interes = round(saldo * interes_mensual, 2)
             abono = round(mensualidad - interes, 2)
@@ -804,7 +807,7 @@ def genera_amortizacion():
 
             tabla.append({
                 "n_pago": i,
-                "fecha": (fecha_inicio + timedelta(days=30 * i)).strftime("%d-%m-%Y"),
+                "fecha":  (fecha_inicio + relativedelta(months=i-1)).strftime("%d-%m-%Y"),    # (fecha_inicio + timedelta(month=1 * i)).strftime("%d-%m-%Y"),
                 "abono": abono,
                 "interes": interes,
                 "mensualidad": mensualidad,
@@ -815,11 +818,11 @@ def genera_amortizacion():
         total_intereses = round(sum(p["interes"] for p in tabla), 2)
         total_a_pagar = round(mensualidad * mensualidades, 2)
     else:
-        fecha_inicio = datetime.today() # falta esto de fechas
+        fecha_inicio = datetime.strptime(req["fechaprimerpago"], "%Y-%m-%d")
         tabla = []
         tabla.append({
                 "n_pago": 1,
-                "fecha": (fecha_inicio + timedelta(days=30 * 1)).strftime("%d-%m-%Y"),
+                "fecha": (fecha_inicio + relativedelta(months=0)).strftime("%d-%m-%Y"),
                 "abono": saldo_a_financiar,
                 "interes": 0,
                 "mensualidad": saldo_a_financiar,
@@ -895,7 +898,8 @@ def genera_pagare():
         "fecha_actual": fecha_hoy,
         "nombre_suscriptor": req["nombre_suscriptor"],
         "domicilio_suscriptor": req["domicilio_suscriptor"],
-        "telefono_suscriptor": req["telefono_suscriptor"]
+        "telefono_suscriptor": req["telefono_suscriptor"],
+        "diadepago": fecha_fin.split("-")[2]
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -1166,10 +1170,9 @@ def generar_documentos(req, cuenta):
     enganche = float(req["enganche"])
     superficie = float(req["superficie_m2"])
     precio_m2 = float(req["inmueble_preciopormetro"])
-    enganche = float(req["enganche"])
     descuento = float(req.get("descuento", 0))
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-    fecha_vencimiento = (datetime.today() + timedelta(days=10)).strftime("%Y-%m-%d")
+    fecha_vencimiento = req["fecha_primer_pago"]
     precio_total = superficie * precio_m2
 
     documentos_recibo= []
@@ -1177,7 +1180,7 @@ def generar_documentos(req, cuenta):
 
     #aqui  hago el enganche
     llenado_enganche = {"fechadeelaboracion":fecha_hoy,
-        "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
+        "fechadevencimiento":req["fecha_enganche"], "fechadevencimientovar":req["fecha_enganche"],
         "saldo":enganche, "cargo":enganche, "abono":0, "fk_cuenta":cuenta, "fk_tipo":1
     }
     (enganche_documento, enganche_movimiento) = crear_documento(llenado_enganche)
@@ -1203,13 +1206,13 @@ def generar_documentos(req, cuenta):
         else:
             mensualidad = saldo_a_financiar / mensualidades
         mensualidad = round(mensualidad, 2)
-        fecha_inicio = datetime.today() # falta esto de fechas
+        print("viendo esto ", req["fecha_primer_pago"])
+        fecha_inicio = "2024-09-09"
         for i in range(1, mensualidades + 1):
-            fecha_vencimiento = (fecha_inicio + timedelta(days=30 * i)).strftime("%d-%m-%Y")
-            fecha_vencimiento_good = fecha_vencimiento.split("-")
-            fvg = "{}-{}-18".format(fecha_vencimiento_good[2],fecha_vencimiento_good[1],)
+            fecha_vencimiento = (fecha_inicio + relativedelta(months=i-1)).strftime("%d-%m-%Y")
+            print("viendo ", fecha_vencimiento)
             llenado_contado = {"fechadeelaboracion":fecha_hoy,
-            "fechadevencimiento":fvg, "fechadevencimientovar":fvg,
+            "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
             "saldo":mensualidad, "cargo":mensualidad, "abono":0, "fk_cuenta":cuenta, "fk_tipo":2
             }
             (resto_documento, resto_movimiento) = crear_documento(llenado_contado)
