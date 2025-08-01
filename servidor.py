@@ -57,7 +57,7 @@ def numero_a_letras_mxn(cantidad):
     return f"{letras} pesos {parte_decimal:02d}/100 M.N."
 
 
-def fecha_a_letras(fecha):
+def fecha_a_letras(fecha, leyenda=False):
     [a,m,d] = fecha.split("-")
     mes = ""
     if m =="01":
@@ -84,6 +84,8 @@ def fecha_a_letras(fecha):
         mes ="Noviembre"
     if m =="12":
         mes ="Diciembre"
+    if leyenda:
+        return f"{d} días del mes de {mes} del {a}"
     return f"{d} de {mes} del {a}"
 
 
@@ -893,9 +895,12 @@ def genera_pagare():
         "plazo_meses": req.get("plazo_meses") if req.get("plazo_meses") else 1,
         "mensualidad": mensualidad,
         "fecha_inicio": req["fecha_inicio"],
+        "fecha_inicio_letras": fecha_a_letras(req["fecha_inicio"]),
         "fecha_fin": fecha_fin,
+        "fecha_fin_letras": fecha_a_letras(fecha_fin),
         "interes_moratorio": 40,
         "fecha_actual": fecha_hoy,
+        "fecha_actual_letras": fecha_a_letras(fecha_hoy, True),
         "nombre_suscriptor": req["nombre_suscriptor"],
         "domicilio_suscriptor": req["domicilio_suscriptor"],
         "telefono_suscriptor": req["telefono_suscriptor"],
@@ -995,6 +1000,7 @@ def actualizar_solicitud(id):
 @app.route('/api/contrato', methods=['POST'])
 @jwt_required()
 def genera_contrato():
+    mensualidad =0
     req= request.get_json()
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
     estadocivil = ""
@@ -1007,17 +1013,20 @@ def genera_contrato():
             print("aca")
             estadocivil="Casado"
     else:
-        print("jjeje")
         estadocivil = "Desconocido"
     saldo_pendiente = float(req["precio_total"]) - (float(req.get("descuento", 0))+ float(req["anticipo"]))
     if req.get("plazo_meses", 0) >0:
         fecha = datetime.strptime(req["fecha_primer_pago"], '%Y-%m-%d').date()
         fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
         fecha_fin = fecha_final.strftime('%Y-%m-%d')
+        mensualidad = saldo_pendiente / req.get("plazo_meses")
+        mensualidad = round(mensualidad, 2)
+        
     else:
         fecha = datetime.strptime(req["fecha_primer_pago"], '%Y-%m-%d').date()
         fecha_final = calcular_fecha_fin(fecha, 1)
         fecha_fin = fecha_final.strftime('%Y-%m-%d')
+    
     context = {
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
@@ -1055,7 +1064,9 @@ def genera_contrato():
         "plazo_meses": req.get("plazo_meses", 0),
         "fecha_primer_pago": fecha_a_letras(req["fecha_primer_pago"]),
         "fecha_fin": fecha_a_letras(fecha_fin),
-        "comprador_email":req.get("comprador_email", "")
+        "comprador_email":req.get("comprador_email", ""),
+        "mensualidad":mensualidad,
+        "mensualidad_letras": f"{numero_a_letras_mxn(mensualidad)}",
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -1155,12 +1166,6 @@ def crear_documento(doc, relaciondepago=None):
     return (documento, movimiento)
     
 
-
-# necesito agregar estos al final
-# recibo = crear_recibo(pago, intereses, cantidad, req["referencia"], req["fecha"])
-#     if recibo:
-#         for documento in req["formData"]:
-#             pagar_documento(documento, req["fecha"], recibo)
 
 def generar_documentos(req, cuenta):
     interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0

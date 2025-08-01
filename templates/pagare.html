@@ -5,32 +5,32 @@
     <title>Pagaré</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.6; padding: 40px; }
-        h1, h2 { text-align: center; }
+        h1 { text-align: center; }
         p { margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <h1>PAGARÉ</h1>
-    <p>Por este pagaré me obligo a pagar incondicionalmente a la orden de <strong> &nbsp; {{ acreedor }}&nbsp; </strong> en el domicilio ubicado en {{ domicilio_acreedor }} o en el lugar que se me indique oportunamente, la cantidad de <strong>${{ total_pagare }}</strong> M.N. ({{ total_letras }}).</p>
+    <p><h2>IMPORTE: ${{'{:20,.2f}'.format(total_pagare)}}</h2></p>
+    <p></p>Por medio de este pagaré reconozco(emos) deber y me(nos) obligo(amos) a pagar incondicionalmente a la orden de Arcadia Promotora S. de R.L. de C.V. la cantidad total de <strong>${{'{:20,.2f}'.format(total_pagare)}}</strong> M.N. ({{ total_letras }}).
+    en el domicilio de Av. Hidalgo 1443 Piso 9, mediante <strong>{{ plazo_meses }}</strong> pagos mensuales consecutivos sin intereses del dia <strong>{{ fecha_inicio_letras }}</strong> al <strong>{{ fecha_fin_letras }}</strong>
+    cada una por la cantidad de ${{'{:20,.2f}'.format(mensualidad)}}</p>
 
-    <p>El pago se realizará en <strong>{{ plazo_meses }}</strong> mensualidades consecutivas de <strong>${{ mensualidad }}</strong> M.N. cada una, sin intereses ordinarios.</p>
+    <p>En caso de mora en el principal, la suma de que se trate causará intereses moratorios del 25 por ciento anual</p>
 
-    <p>Los pagos se efectuarán los días <strong>{{diadepago}} de cada mes</strong>, iniciando el <strong>{{ fecha_inicio }}</strong> y terminando el <strong>{{ fecha_fin }}</strong>.</p>
+    <p>La falta de pago oportuno del capital de por los menos dos mensualidades, traerá como consecuencia que sea exigible en su totalidad el saldo insoluto de la cantidad que ampara el presente pagaré, aún cuando las mensualidades que se sucedan a dicha mensualidad, no se encuentren vencidas.</p>
 
-    <p>En caso de falta de pago de <strong>dos o más mensualidades consecutivas</strong>, se considerará vencido anticipadamente el plazo del presente pagaré, quedando obligado el suscriptor a cubrir de inmediato la totalidad del saldo insoluto.</p>
+    <p>Este pagare queda relevado de protesto.</p>
 
-    <p>Este pagaré causará un interés moratorio del <strong>{{ interes_moratorio }}% anual</strong> sobre las cantidades vencidas y no pagadas, a partir del día siguiente en que se incurra en mora y hasta el día del pago total.</p>
+    <p>Para todo lo relacionado con este pagaré, incluyendo su interpretación y cumplimiento, me someto expresamente a las leyes y tribunales vigentes y competentes en la ciudad de Guadalajara, Jalisco, renunciando al fuero que por cualquier otra causa pudiera corresponder.</p>
 
-    <p>El suscriptor renuncia al fuero de su domicilio y se somete expresamente a los tribunales de la ciudad de Guadalajara, Jalisco.</p>
+    <p>Suscribo el presente pagaré en la ciudad de Guadalajara, Jalisco, a los {{ fecha_actual_letras }} </p>
 
     <br><br><br>
-    <p>Lugar y fecha de suscripción: Guadalajara, Jalisco, a {{ fecha_actual }}</p>
-
     <p><strong>Nombre del Suscriptor:</strong> {{ nombre_suscriptor }}</p>
     <p><strong>Domicilio:</strong> {{ domicilio_suscriptor }}</p>
     <p><strong>Teléfono:</strong> {{ telefono_suscriptor }}</p>
 
-    <br><br><br><br>
-    <p>_______________________________<br>Firma del Suscriptor</p>
+    <p>ACEPTO(AMOS)_______________________________</p>
 </body>
 </html>
