@@ -1188,7 +1188,7 @@ def generar_documentos(req, cuenta):
         "fechadevencimiento":req["fecha_enganche"], "fechadevencimientovar":req["fecha_enganche"],
         "saldo":enganche, "cargo":enganche, "abono":0, "fk_cuenta":cuenta, "fk_tipo":1
     }
-    (enganche_documento, enganche_movimiento) = crear_documento(llenado_enganche)
+    (enganche_documento, enganche_movimiento) = crear_documento(llenado_enganche, "mensualidad (enganche)")
     documentos_recibo.append(enganche_documento)
     saldo_a_financiar = superficie * precio_m2 - enganche
 
@@ -1200,7 +1200,7 @@ def generar_documentos(req, cuenta):
         "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
         "saldo":descuento, "cargo":descuento, "abono":0, "fk_cuenta":cuenta, "fk_tipo":14
         }
-        (descuento_documento, descuento_movimiento) = crear_documento(llenado_descuento)
+        (descuento_documento, descuento_movimiento) = crear_documento(llenado_descuento, "descuento")
         documentos_recibo.append(descuento_documento)
         #crear_movimiento_abono({"cantidad":descuento, "fecha":fecha_hoy, })
 
@@ -1219,14 +1219,14 @@ def generar_documentos(req, cuenta):
             "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
             "saldo":mensualidad, "cargo":mensualidad, "abono":0, "fk_cuenta":cuenta, "fk_tipo":2
             }
-            (resto_documento, resto_movimiento) = crear_documento(llenado_contado)
+            (resto_documento, resto_movimiento) = crear_documento(llenado_contado, f"{i}/{mensualidades}")
    
     else:
         llenado_contado = {"fechadeelaboracion":fecha_hoy,
             "fechadevencimiento":fecha_vencimiento, "fechadevencimientovar":fecha_vencimiento,
             "saldo":saldo_a_financiar, "cargo":saldo_a_financiar, "abono":0, "fk_cuenta":cuenta, "fk_tipo":2
             }
-        (resto_documento, resto_movimiento) = crear_documento(llenado_contado)
+        (resto_documento, resto_movimiento) = crear_documento(llenado_contado, "1/1")
 
 
 
