@@ -7,16 +7,22 @@
         body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.6; padding: 40px; }
         h1 { text-align: center; }
         p { margin-bottom: 15px; }
+        body {
+            text-align: justify;
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
     <h1>PAGARÉ</h1>
     <p><h2>IMPORTE: ${{'{:20,.2f}'.format(total_pagare)}}</h2></p>
     <p></p>Por medio de este pagaré reconozco(emos) deber y me(nos) obligo(amos) a pagar incondicionalmente a la orden de Arcadia Promotora S. de R.L. de C.V. la cantidad total de <strong>${{'{:20,.2f}'.format(total_pagare)}}</strong> M.N. ({{ total_letras }}).
-    en el domicilio de Av. Hidalgo 1443 Piso 9, mediante <strong>{{ plazo_meses }}</strong> pagos mensuales consecutivos sin intereses del dia <strong>{{ fecha_inicio_letras }}</strong> al <strong>{{ fecha_fin_letras }}</strong>
-    cada una por la cantidad de ${{'{:20,.2f}'.format(mensualidad)}}</p>
+    en el domicilio de Av. Hidalgo 1443 PH, mediante <strong>{{ plazo_meses }}</strong> pagos mensuales consecutivos sin intereses del dia <strong>{{ fecha_inicio_letras }}</strong> al <strong>{{ fecha_fin_letras }}</strong>
+    cada una por la cantidad de ${{'{:20,.2f}'.format(mensualidad)}} ({{mensualidad_letras}})</p>
 
-    <p>En caso de mora en el principal, la suma de que se trate causará intereses moratorios del 25 por ciento anual</p>
+    <p>En caso de mora en el principal, la suma de que se trate causará intereses moratorios del 40% por ciento anual</p>
 
     <p>La falta de pago oportuno del capital de por los menos dos mensualidades, traerá como consecuencia que sea exigible en su totalidad el saldo insoluto de la cantidad que ampara el presente pagaré, aún cuando las mensualidades que se sucedan a dicha mensualidad, no se encuentren vencidas.</p>
 

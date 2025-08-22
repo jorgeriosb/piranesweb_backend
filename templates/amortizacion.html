@@ -37,7 +37,7 @@
       </tr>
       <tr>
         <td style="padding: 5px;"><strong>Superficie:</strong> {{'{:20,.2f}'.format(superficie)}} m²</td>
-        <td style="padding: 5px;"><strong>Precio por m²:</strong> ${{ precio_m2 }}</td>
+        <td style="padding: 5px;"><strong>Precio por m²:</strong> ${{'{:20,.2f}'.format(precio_m2) }}</td>
       </tr>
       <tr>
         <td style="padding: 5px;"><strong>Enganche:</strong> ${{'{:20,.2f}'.format(enganche)}}</td>
@@ -48,7 +48,7 @@
         <td style="padding: 5px;"><strong>Interes Anual:</strong> {{ interes_anual }}%</td>
       </tr>
       <tr>
-        <td style="padding: 5px;"><strong>Descuento:</strong> {{descuento}}</td>
+        <td style="padding: 5px;"><strong>Descuento:</strong>  ${{'{:20,.2f}'.format(descuento) }}</td>
         <td style="padding: 5px;"><strong></strong> </td>
       </tr>
       

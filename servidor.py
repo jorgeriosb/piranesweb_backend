@@ -722,6 +722,7 @@ def download_recibo(id):
 
     # PDFKit options
     options = {
+        "encoding": "UTF-8",
         'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
@@ -856,6 +857,7 @@ def genera_amortizacion():
 
     # PDFKit options
     options = {
+        "encoding": "UTF-8",
         'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
@@ -894,6 +896,7 @@ def genera_pagare():
         "total_letras": f"{numero_a_letras_mxn(req["total_pagare"])}",
         "plazo_meses": req.get("plazo_meses") if req.get("plazo_meses") else 1,
         "mensualidad": mensualidad,
+        "mensualidad_letras": f"{numero_a_letras_mxn(mensualidad)}",
         "fecha_inicio": req["fecha_inicio"],
         "fecha_inicio_letras": fecha_a_letras(req["fecha_inicio"]),
         "fecha_fin": fecha_fin,
@@ -912,6 +915,7 @@ def genera_pagare():
 
     # PDFKit options
     options = {
+        "encoding": "UTF-8",
         'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
@@ -944,6 +948,7 @@ def genera_solicitud():
 
     # PDFKit options
     options = {
+        "encoding": "UTF-8",
         'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
@@ -1032,7 +1037,7 @@ def genera_contrato():
         "comprador_nacionalidad": req["comprador_nacionalidad"],
         "superficie_m2":float(req["superficie_m2"]),
         "precio_total": float(req["precio_total"]),
-        "precio_total_letras": f"{numero_a_letras_mxn(req["precio_total"])}",
+        "precio_total_letras": f"{numero_a_letras_mxn( (float(req["precio_total"])- float(req.get("descuento",0)))   )}",
         "anticipo": float(req["anticipo"]),
         "anticipo_letras": f"{numero_a_letras_mxn(req["anticipo"])}",
         "saldo_escritura": saldo_pendiente, #este no se de donde lo tengo que agarrar
@@ -1067,6 +1072,7 @@ def genera_contrato():
         "comprador_email":req.get("comprador_email", ""),
         "mensualidad":mensualidad,
         "mensualidad_letras": f"{numero_a_letras_mxn(mensualidad)}",
+        "descuento": float(req.get("descuento", 0))
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -1080,6 +1086,7 @@ def genera_contrato():
 
     # PDFKit options
     options = {
+        "encoding": "UTF-8",
         'margin-top': '35mm',
         'encoding': 'UTF-8',
         'header-html': 'temp_header.html',

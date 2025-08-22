@@ -98,7 +98,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 
 <h3>Segunda. PRECIO Y FORMA DE PAGO</h3>
 <p>
-    El precio que <strong>"LAS PARTES"</strong> han pactado por concepto de contraprestación asciende a la cantidad de <strong>&nbsp; ${{'{:20,.2f}'.format(precio_total)}}</strong> ({{precio_total_letras}}), el cual se establece por todo el <strong>"INMUEBLE"</strong> materia de Contrato, ya que la presente operación se realiza <em>"ad corpus"</em>, por lo que en el supuesto de que al verificarse la medición del mismo, éste resulte de mayor o menor superficie, el precio no sufrirá alteración, tal como disponen los artículos 1858 y 1860 del Código Civil para el Estado de Jalisco.
+    El precio que <strong>"LAS PARTES"</strong> han pactado por concepto de contraprestación asciende a la cantidad de <strong>&nbsp; ${{'{:20,.2f}'.format(precio_total-descuento)}}</strong> ({{precio_total_letras}}), el cual se establece por todo el <strong>"INMUEBLE"</strong> materia de Contrato, ya que la presente operación se realiza <em>"ad corpus"</em>, por lo que en el supuesto de que al verificarse la medición del mismo, éste resulte de mayor o menor superficie, el precio no sufrirá alteración, tal como disponen los artículos 1858 y 1860 del Código Civil para el Estado de Jalisco.
 </p>
 <p>
     "LAS PARTES" convienen en que el precio será pagado de la siguiente forma:
@@ -122,7 +122,7 @@ Contrato de adhesión de compraventa de terreno destinado a casa habitación, al
 
 <ol start="2">
     <li>
-        El resto de la contraprestación o sea la cantidad de <strong>${{'{:20,.2f}'.format(saldo_escritura)}}</strong> ({{saldo_escritura_letras}}), la deberá(n) pagar "LA PARTE COMPRADORA" mediante {{plazo_meses}} amortizaciones mensuales, consecutivas sin intereses del día {{fecha_primer_pago}} al día {{fecha_fin}}, cada una por la cantidad de {{'{:20,.2f}'.format(mensualidad)}} ({{mensualidad_letras}}).
+        El resto de la contraprestación o sea la cantidad de <strong>${{'{:20,.2f}'.format(saldo_escritura)}}</strong> ({{saldo_escritura_letras}}), la deberá(n) pagar "LA PARTE COMPRADORA" mediante {{plazo_meses}} amortizaciones mensuales, consecutivas sin intereses del día {{fecha_primer_pago}} al día {{fecha_fin}}, cada una por la cantidad de ${{'{:20,.2f}'.format(mensualidad)}} ({{mensualidad_letras}}).
     </li>
 </ol>
 
