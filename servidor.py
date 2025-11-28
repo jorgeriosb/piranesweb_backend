@@ -1275,8 +1275,8 @@ def guardar_cuenta():
     #     mensualidad = round(mensualidad, 2)
 
     llenado_cuenta = {"codigo":pk_cuenta, "fecha":fecha_hoy, "saldo":precio_total, "fk_cliente":req["fk_cliente"], "fk_inmueble":req["fkinmueble"], "fk_tipo_cuenta":1, "congelada":0}
-    movimiento = Cuenta(**llenado_cuenta)
-    db.session.add(movimiento)
+    cuenta = Cuenta(**llenado_cuenta)
+    db.session.add(cuenta)
     db.session.commit()
     amortizacion = db.session.execute(db.select(GixAmortizacion).filter_by(pkamortizacion=req["amortizacion"])).scalar_one()
     amortizacion.cuenta=pk_cuenta
