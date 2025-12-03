@@ -1000,7 +1000,14 @@ def actualizar_solicitud(id):
     sol = Solicitud.query.get(id)
     return jsonify({"status":"good", "data":sol.as_dict()})
 
-
+def fix_encoding(text):
+    # Step 1: Encode the string using the wrong encoding (Latin-1/ISO-8859-1). 
+    # This turns the characters back into their original bytes.
+    bytes_data = text.encode('latin1')
+    
+    # Step 2: Decode the bytes using the correct encoding (UTF-8).
+    cleaned_text = bytes_data.decode('utf8')
+    return cleaned_text
 
 @app.route('/api/contrato', methods=['POST'])
 @jwt_required()
@@ -1032,6 +1039,8 @@ def genera_contrato():
         fecha_final = calcular_fecha_fin(fecha, 1)
         fecha_fin = fecha_final.strftime('%Y-%m-%d')
     
+
+    
     context = {
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
@@ -1045,10 +1054,10 @@ def genera_contrato():
         "fecha_contrato": fecha_hoy,
         "fecha_letras": fecha_a_letras(fecha_hoy),
         "nombre_vendedora": "ARCADIA PROMOTORA S. DE R.L. DE C.V.",
-        "lindero1": req["lindero1"],
-        "lindero2": req["lindero2"],
-        "lindero3": req["lindero3"],
-        "lindero4": req["lindero4"],
+        "lindero1": fix_encoding(req["lindero1"]),
+        "lindero2": fix_encoding(req["lindero2"]),
+        "lindero3": fix_encoding(req["lindero3"]),
+        "lindero4": fix_encoding(req["lindero4"]),
         "titulo1": req["titulo1"],
         "titulo2": req["titulo2"],
         "titulo3": req["titulo3"],
