@@ -1096,6 +1096,10 @@ def genera_contrato():
     # PDFKit options
     options = {
         #mansando cambio
+        'enable-local-file-access': '',
+        'load-error-handling': 'ignore',
+        'load-media-error-handling': 'ignore',
+        'enable-external-links': '',
         "encoding": "UTF-8",
         'margin-top': '35mm',
         'encoding': 'UTF-8',
