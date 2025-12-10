@@ -1095,6 +1095,7 @@ def genera_contrato():
 
     # PDFKit options
     options = {
+        #mansando cambio
         "encoding": "UTF-8",
         'margin-top': '35mm',
         'encoding': 'UTF-8',
@@ -1109,7 +1110,7 @@ def genera_contrato():
         io.BytesIO(pdf),
         mimetype='application/pdf',
         as_attachment=True,
-        download_name='pagare.pdf'
+        download_name='contrato.pdf'
     )
 
 
