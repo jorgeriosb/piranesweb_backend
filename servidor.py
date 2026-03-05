@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 import os
 #from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
-from sqlalchemy import text
+from sqlalchemy import text, func, case
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -27,6 +27,7 @@ from collections import defaultdict
 import calendar
 from functools import reduce
 from dateutil.relativedelta import relativedelta
+
 
 
 
@@ -1449,6 +1450,149 @@ def get_saldos():
                         "Vendido Etapa 5 (Contratado)": '${:20,.2f}'.format(total_vendido_34), "Vendido Etapa 6 (Contratado)": '${:20,.2f}'.format(total_vendido_35),
                         "Vendido Etapa 5 (Vendido)": '${:20,.2f}'.format(total_descuento_34), "Vendido Etapa 6 (Vendido)": '${:20,.2f}'.format(total_descuento_35)},
                         )
+    return response
+
+
+@app.route('/api/cuentas_vencidas')
+@jwt_required()
+def get_cuentas_vencidas():
+    subquery = (
+        db.session.query(
+            Cuenta.codigo.label("cuenta_id"),
+            func.min(Documento.fechadevencimiento).label("fecha_mas_antigua")
+        )
+        .join(Documento, Documento.fk_cuenta == Cuenta.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
+        .filter(
+            Documento.saldo > 0,
+            Documento.fechadevencimiento < func.current_date(),
+            Inmueble.fk_etapa.in_([8,9,10,33,34,35])
+        )
+        .group_by(Cuenta.codigo)
+    ).subquery()
+
+    cuentas_30 = (
+        db.session.query(
+            Cuenta.codigo.label("cuenta"),
+            Cliente.nombre.label("cliente"),
+            (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
+            Cuenta.saldo.label("saldo")
+        )
+        .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
+        .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .filter(
+            subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '30 days'"),
+            subquery.c.fecha_mas_antigua > func.current_date() - text("INTERVAL '60 days'")
+        )
+        .order_by(text("dias_vencido DESC"))
+        .all()
+    )
+    cuentas_60 = (
+        db.session.query(
+            Cuenta.codigo.label("cuenta"),
+            Cliente.nombre.label("cliente"),
+            (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
+            Cuenta.saldo.label("saldo"),
+        )
+        .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
+        .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .filter(
+            subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '60 days'"),
+            subquery.c.fecha_mas_antigua > func.current_date() - text("INTERVAL '90 days'")
+        )
+        .order_by(text("dias_vencido DESC"))
+        .all()
+    )
+
+    cuentas_90 = (
+        db.session.query(
+            Cuenta.codigo.label("cuenta"),
+            Cliente.nombre.label("cliente"),
+            (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
+            Cuenta.saldo.label("saldo"),
+        )
+        .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
+        .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .filter(
+            subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '90 days'")
+        )
+        .order_by(text("dias_vencido DESC"))
+        .all()
+    )
+    
+    response = jsonify({"Vencido 30 dias":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_30], "Vencido 60 dias":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_60], "Vencido 90 dias o mas":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_90], "Al corriente": []})
+    return response
+
+@app.route('/api/saldos_vencidos')
+@jwt_required()
+def get_saldos_vencidos():
+    
+    totales = (
+        db.session.query(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            Documento.fechadevencimiento <= func.current_date() - text("INTERVAL '90 days'"),
+                            Documento.saldo
+                        ),
+                        else_=0
+                    )
+                ), 0
+            ).label("total_90"),
+
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Documento.fechadevencimiento <= func.current_date() - text("INTERVAL '60 days'")) &
+                            (Documento.fechadevencimiento > func.current_date() - text("INTERVAL '90 days'")),
+                            Documento.saldo
+                        ),
+                        else_=0
+                    )
+                ), 0
+            ).label("total_60"),
+
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Documento.fechadevencimiento <= func.current_date() - text("INTERVAL '30 days'")) &
+                            (Documento.fechadevencimiento > func.current_date() - text("INTERVAL '60 days'")),
+                            Documento.saldo
+                        ),
+                        else_=0
+                    )
+                ), 0
+            ).label("total_30"),
+        )
+        .join(Cuenta, Documento.fk_cuenta == Cuenta.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
+        .filter(
+            Documento.saldo > 0,
+            Inmueble.fk_etapa.in_([8,9,10,33,34,35])
+        )
+        .one()
+    )
+    total_al_corriente = (
+        db.session.query(
+            func.coalesce(func.sum(Documento.saldo), 0)
+        )
+        .join(Cuenta, Documento.fk_cuenta == Cuenta.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
+        .filter(
+            Documento.saldo > 0,
+            Documento.fechadevencimiento >= func.current_date(),
+            Inmueble.fk_etapa.in_([8,9,10,33,34,35])
+        )
+        .scalar()
+    )
+    total_90 = totales.total_90
+    total_60 = totales.total_60
+    total_30 = totales.total_30
+
+    response = jsonify({"Vencido 30 dias":'${:20,.2f}'.format(total_30), "Vencido 60 dias":'${:20,.2f}'.format(total_60), "Vencido 90 dias o mas":'${:20,.2f}'.format(total_90), "Al corriente":'${:20,.2f}'.format(total_al_corriente)})
     return response
 
 
