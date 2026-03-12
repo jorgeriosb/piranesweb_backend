@@ -1456,6 +1456,7 @@ def get_saldos():
 @app.route('/api/cuentas_vencidas')
 @jwt_required()
 def get_cuentas_vencidas():
+    
     subquery = (
         db.session.query(
             Cuenta.codigo.label("cuenta_id"),
@@ -1466,20 +1467,52 @@ def get_cuentas_vencidas():
         .filter(
             Documento.saldo > 0,
             Documento.fechadevencimiento < func.current_date(),
-            Inmueble.fk_etapa.in_([8,9,10,33,34,35])
+            Inmueble.fk_etapa.in_([8,9,10,33,34,35]),
+            Cuenta.saldo>0
         )
         .group_by(Cuenta.codigo)
     ).subquery()
+
+    cuentas_al_corriente = (
+        db.session.query(
+           Cuenta.codigo.label("cuenta"),
+            Cliente.nombre.label("cliente"),
+            (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
+            Cuenta.saldo.label("saldo"),
+            Inmueble.iden2.label("iden2"),
+            Inmueble.iden1.label("iden1"),
+        )
+        .join(Documento, Documento.fk_cuenta == Cuenta.codigo)
+        .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
+        .filter(
+            Documento.saldo > 0,
+            Documento.fechadevencimiento >= func.current_date(),
+            Inmueble.fk_etapa.in_([8, 9, 10, 33, 34, 35]),
+        )
+        .group_by(
+            Cuenta.codigo,
+            Cliente.nombre,
+            Inmueble.iden2,
+            Inmueble.iden1,
+            subquery.c.fecha_mas_antigua,
+            Cuenta.saldo
+        )
+        .all()
+    )
 
     cuentas_30 = (
         db.session.query(
             Cuenta.codigo.label("cuenta"),
             Cliente.nombre.label("cliente"),
             (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
-            Cuenta.saldo.label("saldo")
+            Cuenta.saldo.label("saldo"),
+            Inmueble.iden2.label("iden2"),
+            Inmueble.iden1.label("iden1"),
         )
         .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
         .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
         .filter(
             subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '30 days'"),
             subquery.c.fecha_mas_antigua > func.current_date() - text("INTERVAL '60 days'")
@@ -1493,9 +1526,12 @@ def get_cuentas_vencidas():
             Cliente.nombre.label("cliente"),
             (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
             Cuenta.saldo.label("saldo"),
+            Inmueble.iden2.label("iden2"),
+            Inmueble.iden1.label("iden1"),
         )
         .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
         .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
         .filter(
             subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '60 days'"),
             subquery.c.fecha_mas_antigua > func.current_date() - text("INTERVAL '90 days'")
@@ -1510,9 +1546,12 @@ def get_cuentas_vencidas():
             Cliente.nombre.label("cliente"),
             (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
             Cuenta.saldo.label("saldo"),
+            Inmueble.iden2.label("iden2"),
+            Inmueble.iden1.label("iden1"),
         )
         .join(subquery, Cuenta.codigo == subquery.c.cuenta_id)
         .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
+        .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
         .filter(
             subquery.c.fecha_mas_antigua <= func.current_date() - text("INTERVAL '90 days'")
         )
@@ -1520,7 +1559,10 @@ def get_cuentas_vencidas():
         .all()
     )
     
-    response = jsonify({"Vencido 30 dias":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_30], "Vencido 60 dias":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_60], "Vencido 90 dias o mas":[{"cuenta":x[0],"nombre":x[1], "saldo":'${:20,.2f}'.format(x[-1])} for x in cuentas_90], "Al corriente": []})
+    response = jsonify({"Vencido 30 dias":[{"cuenta":x[0],"nombre":x[1], "lote":f"{x[4]} {x[5]}", "saldo":'${:20,.2f}'.format(x[3])} for x in cuentas_30], 
+                        "Vencido 60 dias":[{"cuenta":x[0],"nombre":x[1], "lote":f"{x[4]} {x[5]}", "saldo":'${:20,.2f}'.format(x[3])} for x in cuentas_60], 
+                        "Vencido 90 dias o mas":[{"cuenta":x[0],"nombre":x[1], "lote":f"{x[4]} {x[5]}", "saldo":'${:20,.2f}'.format(x[3])} for x in cuentas_90], 
+                        "Al corriente": [{"cuenta":x[0],"nombre":x[1], "lote":f"{x[4]} {x[5]}", "saldo":'${:20,.2f}'.format(x[3])} for x in cuentas_al_corriente]})
     return response
 
 @app.route('/api/saldos_vencidos')
