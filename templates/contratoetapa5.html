@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Contrato de Compraventa de Terreno</title>
-    <style>
-        @font-face {
-            font-family: "ContratoFont";
-            src: url("file:///home/ubuntu/fonts/LiberationSerif-Regular.ttf") format("truetype");
-            font-weight: normal;
-        }
+    {% if env=="production" %}
+        <style>
+                
 
-        @font-face {
-            font-family: "ContratoFont";
-            src: url("file:///home/ubuntu/fonts//LiberationSerif-Bold.ttf") format("truetype");
-            font-weight: bold;
-        }
-        body { font-family: "ContratoFont"; margin: 40px; line-height: 1.6; }
+                @font-face {
+                    font-family: "ContratoFont";
+                    src: url("file:///home/ubuntu/fonts/LiberationSerif-Regular.ttf") format("truetype");
+                    font-weight: normal;
+                }
+
+                @font-face {
+                    font-family: "ContratoFont";
+                    src: url("file:///home/ubuntu/fonts//LiberationSerif-Bold.ttf") format("truetype");
+                    font-weight: bold;
+                }
+                body { font-family: "ContratoFont"; margin: 40px; line-height: 1.6; }
+            </style>
+    {% endif %}
+    <style>
         h1 { text-align: center; }
-        p, li { text-align: justify; }
-        ul { margin-left: 20px; }
+                p, li { text-align: justify; }
+                ul { margin-left: 20px; }
     </style>
+    
 </head>
 <body>
 

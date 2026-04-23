@@ -1,3 +1,4 @@
+import csv
 import json
 from pydoc import Doc, doc
 from xml.dom.minidom import Document
@@ -28,6 +29,9 @@ import calendar
 from functools import reduce
 from dateutil.relativedelta import relativedelta
 
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 
@@ -1082,7 +1086,8 @@ def genera_contrato():
         "comprador_email":req.get("comprador_email", ""),
         "mensualidad":mensualidad,
         "mensualidad_letras": f"{numero_a_letras_mxn(mensualidad)}",
-        "descuento": float(req.get("descuento", 0))
+        "descuento": float(req.get("descuento", 0)),
+        "env":ENV
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -1090,7 +1095,7 @@ def genera_contrato():
         rendered = render_template('contratoetapa5.html', **context)
     if req["fk_etapa"] == 35:
         rendered = render_template('contratoetapa6.html', **context)
-    header_html = render_template("logo.html")
+    header_html = render_template("logo.html", **{"env":ENV})
     with open("temp_header.html", "w", encoding="utf-8") as f:
         f.write(header_html)
 
@@ -1104,9 +1109,9 @@ def genera_contrato():
         "encoding": "UTF-8",
         'margin-top': '35mm',
         'encoding': 'UTF-8',
-        'header-html': 'temp_header.html',
+        'header-html':"file://" + os.path.join(BASE_DIR, "temp_header.html"), #'temp_header.html',
         'header-spacing': '5',  # space between header and content
-        'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
+        #'enable-local-file-access': '',  # VERY important to allow local file access (e.g., image)
     }
 
     # Generate PDF
@@ -1116,6 +1121,88 @@ def genera_contrato():
         mimetype='application/pdf',
         as_attachment=True,
         download_name='contrato.pdf'
+    )
+
+@app.route('/api/estadodecuenta/<int:cuenta_id>', methods=['GET'])
+@jwt_required()
+def estado_decuenta(cuenta_id):
+    #req= request.get_json()
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    cuenta = Cuenta.query.filter_by(codigo=cuenta_id).first()
+    if not cuenta:
+        raise Exception("Cuenta no encontrada")
+
+    # 🔹 Obtener cliente e inmueble
+    cliente = Cliente.query.filter_by(codigo=cuenta.fk_cliente).first()
+    inmueble = Inmueble.query.filter_by(codigo=cuenta.fk_inmueble).first()
+
+    # 🔹 Obtener documentos ordenados
+    documentos = Documento.query.filter_by(
+        fk_cuenta=cuenta.codigo
+    ).order_by(Documento.codigo).all()
+
+    # 🔹 Crear buffer CSV en memoria
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # =========================
+    # HEADER PRINCIPAL
+    # =========================
+    writer.writerow([
+        "Cliente",
+        "Manzana",
+        "Lote"
+    ])
+
+    writer.writerow([
+        f"{cliente.nombre}, cuenta: {cuenta.codigo}" if cliente else "",
+        inmueble.iden1 if inmueble else "",
+        inmueble.iden2 if inmueble else "",
+    ])
+
+    writer.writerow([])  # línea vacía
+
+    # =========================
+    # DETALLE
+    # =========================
+    for doc in documentos:
+        # 🔹 Fila de documento
+        writer.writerow([
+            "DOCUMENTO",
+            f"ID: {doc.codigo}",
+            f"Fecha: {doc.fechadeelaboracion}",
+            f"Saldo: {round(doc.saldo, 2)}"
+        ])
+
+        # 🔹 Header movimientos
+        writer.writerow([
+            "Fecha",
+            "Descripción",
+            "Cantidad"
+        ])
+
+        # 🔹 Obtener movimientos
+        movimientos = Movimiento.query.filter_by(
+            fk_documento=doc.codigo
+        ).order_by(Movimiento.fecha.asc()).all()
+
+        for mov in movimientos:
+            writer.writerow([
+                mov.fecha.strftime("%Y-%m-%d") if mov.fecha else "",
+                mov.relaciondepago or "",
+                round(mov.cantidad, 2)
+            ])
+
+        writer.writerow([])  # espacio entre documentos
+
+    # 🔹 Preparar archivo para descarga
+    output.seek(0)
+
+    return send_file(
+        io.BytesIO(output.getvalue().encode("utf-8-sig")),  # 👈 clave aquí
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"reporte_cuenta_{cuenta_id}.csv"
     )
 
 
@@ -1457,6 +1544,21 @@ def get_saldos():
 @jwt_required()
 def get_cuentas_vencidas():
     
+    # subquery = (
+    #     db.session.query(
+    #         Cuenta.codigo.label("cuenta_id"),
+    #         func.min(Documento.fechadevencimiento).label("fecha_mas_antigua")
+    #     )
+    #     .join(Documento, Documento.fk_cuenta == Cuenta.codigo)
+    #     .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
+    #     .filter(
+    #         Documento.saldo > 0,
+    #         Documento.fechadevencimiento < func.current_date(),
+    #         Inmueble.fk_etapa.in_([8,9,10,33,34,35]),
+    #         Cuenta.saldo>0
+    #     )
+    #     .group_by(Cuenta.codigo)
+    # ).subquery()
     subquery = (
         db.session.query(
             Cuenta.codigo.label("cuenta_id"),
@@ -1468,7 +1570,15 @@ def get_cuentas_vencidas():
             Documento.saldo > 0,
             Documento.fechadevencimiento < func.current_date(),
             Inmueble.fk_etapa.in_([8,9,10,33,34,35]),
-            Cuenta.saldo>0
+            Cuenta.saldo > 0,
+
+            # 🔥 ESTE ES EL FIX
+            ~Cuenta.codigo.in_(
+                db.session.query(Documento.fk_cuenta).filter(
+                    Documento.saldo > 0,
+                    Documento.fechadevencimiento >= func.current_date()
+                )
+            )
         )
         .group_by(Cuenta.codigo)
     ).subquery()
