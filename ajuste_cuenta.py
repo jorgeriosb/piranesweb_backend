@@ -106,7 +106,7 @@ def update_documentos_and_cuenta(cuenta_codigo):
         cursor.close()
         conn.close()
 
-# Example usage
+# Example usage jejeje 
 if __name__ == "__main__":
     cuenta_codigo = 2907  # Replace with the actual cuenta code
     update_documentos_and_cuenta(cuenta_codigo)
