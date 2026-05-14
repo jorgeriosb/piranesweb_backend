@@ -28,6 +28,7 @@ from collections import defaultdict
 import calendar
 from functools import reduce
 from dateutil.relativedelta import relativedelta
+from ajuste_cuenta import update_documentos_and_cuenta
 
 
 
@@ -777,82 +778,143 @@ def genera_amortizacion():
     superficie = float(req["inmueble_superficie"])
     precio_m2 = float(req["inmueble_preciopormetro"])
     enganche = float(req["enganche"])
-    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
-    mensualidades = int(req.get("mensualidades",0))
-    descuento = float(req.get("descuento"))
+    interes_anual = float(req.get("interes_anual", 0))
+    mensualidades = int(req.get("mensualidades", 0))
+    descuento = float(req.get("descuento", 0))
     formadepago = req.get("formadepago")
 
-    # Calcular tabla de amortización
+    # =========================
     # Cálculos iniciales
+    # =========================
+
     total_intereses = 0
     mensualidad = 0
-    precio_inmueble = superficie * precio_m2
-    saldo_a_financiar = superficie * precio_m2 - enganche
-    if descuento >0:
-        saldo_a_financiar-=descuento
+
+    precio_inmueble = round(superficie * precio_m2, 2)
+
+    saldo_a_financiar = round(
+        precio_inmueble - enganche - descuento,
+        2
+    )
 
     interes_mensual = interes_anual / 100 / 12
+
     total_a_pagar = 0
-    if mensualidades:
+
+    # =========================
+    # Calcular mensualidad
+    # =========================
+
+    if mensualidades > 0:
+
+        # Fórmula amortización
         if interes_mensual > 0:
-            mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
+            mensualidad = (
+                saldo_a_financiar
+                * (
+                    interes_mensual
+                    * (1 + interes_mensual) ** mensualidades
+                )
+                / (
+                    ((1 + interes_mensual) ** mensualidades) - 1
+                )
+            )
         else:
             mensualidad = saldo_a_financiar / mensualidades
 
         mensualidad = round(mensualidad, 2)
 
-    # Generar tabla de amortización
+    # =========================
+    # Generar tabla amortización
+    # =========================
+
     if formadepago == "R":
+
         tabla = []
+
+        # saldo ORIGINAL
         saldo = saldo_a_financiar
-        fecha_inicio = datetime.strptime(req["fechaprimerpago"], "%Y-%m-%d")    #datetime.today() # falta esto de fechas
+
+        fecha_inicio = datetime.strptime(
+            req["fechaprimerpago"],
+            "%Y-%m-%d"
+        )
 
         for i in range(1, mensualidades + 1):
+
             interes = round(saldo * interes_mensual, 2)
+
             abono = round(mensualidad - interes, 2)
+
             saldo = round(saldo - abono, 2)
-            if saldo < 0: saldo = 0.00
+
+            # evitar negativos por redondeo
+            if saldo < 0:
+                saldo = 0.00
 
             tabla.append({
                 "n_pago": i,
-                "fecha":  (fecha_inicio + relativedelta(months=i-1)).strftime("%d-%m-%Y"),    # (fecha_inicio + timedelta(month=1 * i)).strftime("%d-%m-%Y"),
+                "fecha": (
+                    fecha_inicio + relativedelta(months=i - 1)
+                ).strftime("%d-%m-%Y"),
                 "abono": abono,
                 "interes": interes,
                 "mensualidad": mensualidad,
-                "saldo": saldo
+                "saldo": saldo,
             })
 
-        # Totales
-        total_intereses = round(sum(p["interes"] for p in tabla), 2)
-        total_a_pagar = round(mensualidad * mensualidades, 2)
+        total_intereses = round(
+            sum(p["interes"] for p in tabla),
+            2
+        )
+
+        total_a_pagar = round(
+            (mensualidad * mensualidades) + enganche,
+            2
+        )
+
     else:
-        fecha_inicio = datetime.strptime(req["fechaprimerpago"], "%Y-%m-%d")
-        tabla = []
-        tabla.append({
-                "n_pago": 1,
-                "fecha": (fecha_inicio + relativedelta(months=0)).strftime("%d-%m-%Y"),
-                "abono": saldo_a_financiar,
-                "interes": 0,
-                "mensualidad": saldo_a_financiar,
-                "saldo": 0
-            })
 
+        fecha_inicio = datetime.strptime(
+            req["fechaprimerpago"],
+            "%Y-%m-%d"
+        )
+
+        tabla = [{
+            "n_pago": 1,
+            "fecha": (
+                fecha_inicio + relativedelta(months=0)
+            ).strftime("%d-%m-%Y"),
+            "abono": saldo_a_financiar,
+            "interes": 0,
+            "mensualidad": saldo_a_financiar,
+            "saldo": 0,
+        }]
+
+        total_a_pagar = round(
+            saldo_a_financiar + enganche,
+            2
+        )
+
+    # =========================
+    # Context
+    # =========================
 
     context = {
-        "inmueble_iden1":req["inmueble_iden1"],
-        "inmueble_iden2":req["inmueble_iden2"],
-        "superficie":superficie,
-        "precio_m2":precio_m2,
-        "enganche":enganche,
-        "saldo_a_financiar":saldo_a_financiar,
-        "mensualidades":mensualidades,
-        "interes_anual":interes_anual,
-        "total_intereses":total_intereses if total_intereses else 0,
-        "total_a_pagar":total_a_pagar,
-        "mensualidad":mensualidad if mensualidad else 0,
-        "tabla":tabla,
-        "descuento":descuento,
-        "precio_inmueble":precio_inmueble
+        "inmueble_iden1": req["inmueble_iden1"],
+        "inmueble_iden2": req["inmueble_iden2"],
+        "superficie": superficie,
+        "precio_m2": precio_m2,
+        "precio_inmueble": precio_inmueble,
+        "enganche": enganche,
+        "descuento": descuento,
+        "saldo_a_financiar": saldo_a_financiar,
+        "mensualidades": mensualidades,
+        "interes_anual": interes_anual,
+        "mensualidad": mensualidad if mensualidad else 0,
+        "total_intereses": total_intereses,
+        "total_a_pagar": total_a_pagar-enganche,
+        "tabla": tabla,
     }
     
 
@@ -1017,77 +1079,223 @@ def fix_encoding(text):
 @app.route('/api/contrato', methods=['POST'])
 @jwt_required()
 def genera_contrato():
-    mensualidad =0
-    req= request.get_json()
-    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-    estadocivil = ""
-    if req.get("estado_civil"):
-        print("entro ", req["estado_civil"])
-        if req["estado_civil"] =="0":
-            print("aqui")
-            estadocivil="Soltero"
-        if req["estado_civil"] =="1":
-            print("aca")
-            estadocivil="Casado"
-    else:
-        estadocivil = "Desconocido"
-    saldo_pendiente = float(req["precio_total"]) - (float(req.get("descuento", 0))+ float(req["anticipo"]))
-    if req.get("plazo_meses", 0) >0:
-        fecha = datetime.strptime(req["fecha_primer_pago"], '%Y-%m-%d').date()
-        fecha_final = calcular_fecha_fin(fecha, req["plazo_meses"])
-        fecha_fin = fecha_final.strftime('%Y-%m-%d')
-        mensualidad = saldo_pendiente / req.get("plazo_meses")
-        mensualidad = round(mensualidad, 2)
-        
-    else:
-        fecha = datetime.strptime(req["fecha_primer_pago"], '%Y-%m-%d').date()
-        fecha_final = calcular_fecha_fin(fecha, 1)
-        fecha_fin = fecha_final.strftime('%Y-%m-%d')
-    
+    mensualidad = 0
 
-    
+    req = request.get_json()
+
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+    # =========================
+    # ESTADO CIVIL
+    # =========================
+    estadocivil = "Desconocido"
+
+    if req.get("estado_civil"):
+        if req["estado_civil"] == "0":
+            estadocivil = "Soltero"
+        elif req["estado_civil"] == "1":
+            estadocivil = "Casado"
+
+    # =========================
+    # VALORES BASE
+    # =========================
+    precio_total_base = float(req["precio_total"])
+    descuento = float(req.get("descuento", 0))
+    anticipo = float(req["anticipo"])
+
+    # saldo inicial sin interés
+    saldo_pendiente = precio_total_base - descuento - anticipo
+
+    plazo_meses = int(req.get("plazo_meses", 0))
+    interes_anual = float(req.get("interes_anual", 0))
+
+    precio_total_financiado = precio_total_base
+
+    # =========================
+    # FINANCIAMIENTO
+    # =========================
+    if plazo_meses > 0:
+
+        # SIN INTERÉS
+        if interes_anual <= 0:
+
+            mensualidad = round(
+                saldo_pendiente / plazo_meses,
+                2
+            )
+
+            total_financiado = saldo_pendiente
+
+        else:
+
+            # interés mensual decimal
+            tasa_mensual = (
+                (interes_anual / 100) / 12
+            )
+
+            # fórmula amortización
+            mensualidad = (
+                saldo_pendiente
+                * (
+                    tasa_mensual
+                    * pow(1 + tasa_mensual, plazo_meses)
+                )
+                / (
+                    pow(1 + tasa_mensual, plazo_meses) - 1
+                )
+            )
+
+            mensualidad = round(mensualidad, 2)
+
+            total_financiado = round(
+                mensualidad * plazo_meses,
+                2
+            )
+
+        # precio total final
+        precio_total_financiado = round(
+            anticipo + total_financiado + descuento,
+            2
+        )
+
+        saldo_pendiente = round(
+            total_financiado,
+            2
+        )
+
+        fecha = datetime.strptime(
+            req["fecha_primer_pago"],
+            '%Y-%m-%d'
+        ).date()
+
+        fecha_final = calcular_fecha_fin(
+            fecha,
+            plazo_meses
+        )
+
+        fecha_fin = fecha_final.strftime('%Y-%m-%d')
+
+    else:
+
+        fecha = datetime.strptime(
+            req["fecha_primer_pago"],
+            '%Y-%m-%d'
+        ).date()
+
+        fecha_final = calcular_fecha_fin(
+            fecha,
+            1
+        )
+
+        fecha_fin = fecha_final.strftime('%Y-%m-%d')
+
+    # =========================
+    # CONTEXT
+    # =========================
     context = {
+
         "comprador_nombre": req["comprador_nombre"],
         "comprador_nacionalidad": req["comprador_nacionalidad"],
-        "superficie_m2":float(req["superficie_m2"]),
-        "precio_total": float(req["precio_total"]),
-        "precio_total_letras": f"{numero_a_letras_mxn( (float(req["precio_total"])- float(req.get("descuento",0)))   )}",
-        "anticipo": float(req["anticipo"]),
-        "anticipo_letras": f"{numero_a_letras_mxn(req["anticipo"])}",
-        "saldo_escritura": saldo_pendiente, #este no se de donde lo tengo que agarrar
-        "saldo_escritura_letras": f"{numero_a_letras_mxn(str(saldo_pendiente))}",
+
+        "superficie_m2": float(req["superficie_m2"]),
+
+        # YA CON INTERESES
+        "precio_total": precio_total_financiado,
+
+        "precio_total_letras":
+            numero_a_letras_mxn(precio_total_financiado),
+
+        "anticipo": anticipo,
+
+        "anticipo_letras":
+            numero_a_letras_mxn(anticipo),
+
+        # saldo financiado
+        "saldo_escritura": saldo_pendiente,
+
+        "saldo_escritura_letras":
+            numero_a_letras_mxn(saldo_pendiente),
+
         "fecha_contrato": fecha_hoy,
-        "fecha_letras": fecha_a_letras(fecha_hoy),
-        "nombre_vendedora": "ARCADIA PROMOTORA S. DE R.L. DE C.V.",
+
+        "fecha_letras":
+            fecha_a_letras(fecha_hoy),
+
+        "nombre_vendedora":
+            "ARCADIA PROMOTORA S. DE R.L. DE C.V.",
+
         "lindero1": fix_encoding(req["lindero1"]),
         "lindero2": fix_encoding(req["lindero2"]),
         "lindero3": fix_encoding(req["lindero3"]),
         "lindero4": fix_encoding(req["lindero4"]),
+
         "titulo1": req["titulo1"],
         "titulo2": req["titulo2"],
         "titulo3": req["titulo3"],
         "titulo4": req["titulo4"],
+
         "iden1": req["iden1"],
         "iden2": req["iden2"],
-        "numeroidentificacion": req["numeroidentificacion"],
-        "identificacion": req["identificacion"],
-        "comprador_edad": req["comprador_edad"],
-        "estado_civil" : estadocivil,
-        "comprador_domicilio": req["comprador_domicilio"],
-        "comprador_ciudad": req["comprador_ciudad"],
-        "comprador_estado":req["comprador_estado"],
-        "comprador_cp":req["comprador_cp"],
-        "comprador_colonia": req["comprador_colonia"],
-        "fk_etapa":req["fk_etapa"],
-        "forma_de_pago": req["forma_de_pago"],
-        "plazo_meses": req.get("plazo_meses", 0),
-        "fecha_primer_pago": fecha_a_letras(req["fecha_primer_pago"]),
-        "fecha_fin": fecha_a_letras(fecha_fin),
-        "comprador_email":req.get("comprador_email", ""),
-        "mensualidad":mensualidad,
-        "mensualidad_letras": f"{numero_a_letras_mxn(mensualidad)}",
-        "descuento": float(req.get("descuento", 0)),
-        "env":ENV
+
+        "numeroidentificacion":
+            req["numeroidentificacion"],
+
+        "identificacion":
+            req["identificacion"],
+
+        "comprador_edad":
+            req["comprador_edad"],
+
+        "estado_civil":
+            estadocivil,
+
+        "comprador_domicilio":
+            req["comprador_domicilio"],
+
+        "comprador_ciudad":
+            req["comprador_ciudad"],
+
+        "comprador_estado":
+            req["comprador_estado"],
+
+        "comprador_cp":
+            req["comprador_cp"],
+
+        "comprador_colonia":
+            req["comprador_colonia"],
+
+        "fk_etapa":
+            req["fk_etapa"],
+
+        "forma_de_pago":
+            req["forma_de_pago"],
+
+        "plazo_meses":
+            plazo_meses,
+
+        "fecha_primer_pago":
+            fecha_a_letras(req["fecha_primer_pago"]),
+
+        "fecha_fin":
+            fecha_a_letras(fecha_fin),
+
+        "comprador_email":
+            req.get("comprador_email", ""),
+
+        "mensualidad":
+            mensualidad,
+
+        "mensualidad_letras":
+            numero_a_letras_mxn(mensualidad),
+
+        "descuento":
+            descuento,
+
+        "interes_anual":
+            interes_anual,
+
+        "env":
+            ENV
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
@@ -1346,37 +1554,147 @@ def generar_documentos(req, cuenta):
 @app.route('/api/cuenta', methods=['POST'])
 @jwt_required()
 def guardar_cuenta():
-    req= request.get_json()
-    result = db.session.execute(text("""select max(codigo) from cuenta"""))
+    req = request.get_json()
+
+    # =========================
+    # OBTENER PK CUENTA
+    # =========================
+    result = db.session.execute(
+        text("""
+            SELECT MAX(codigo)
+            FROM cuenta
+        """)
+    )
+
     codigo = result.fetchone()[0]
-    pk_cuenta = codigo+1
+
+    if codigo is None:
+        pk_cuenta = 1
+    else:
+        pk_cuenta = codigo + 1
+
+    # =========================
+    # DATOS DE ENTRADA
+    # =========================
     superficie = float(req["superficie_m2"])
     precio_m2 = float(req["inmueble_preciopormetro"])
     enganche = float(req["enganche"])
-    interes_anual = float(req.get("interes_anual", 0))  # en porcentaje 10.0
-    mensualidades = int(req.get("plazo_meses",0))
+
+    interes_anual = float(req.get("interes_anual", 0))
+    mensualidades = int(req.get("plazo_meses", 0))
     descuento = float(req.get("descuento", 0))
+
+    forma_pago = req["forma_de_pago"]
+
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-    mensualidad =0
 
-    # Calcular tabla de amortización
-    # Cálculos iniciales
-    precio_total = superficie * precio_m2
-    # saldo_a_financiar = superficie * precio_m2 - enganche
-    # if descuento >0:
-    #     saldo_a_financiar-=descuento
+    # =========================
+    # CALCULAR PRECIO TOTAL
+    # =========================
+    precio_total = round(
+        superficie * precio_m2,
+        2
+    )
 
-    # interes_mensual = interes_anual / 100 / 12
-    # total_a_pagar = 0
-    # if req["forma_de_pago"] != "C":
-    #     if interes_mensual > 0:
-    #         mensualidad = saldo_a_financiar * (interes_mensual * (1 + interes_mensual) ** mensualidades) / ((1 + interes_mensual) ** mensualidades - 1)
-    #     else:
-    #         mensualidad = saldo_a_financiar / mensualidades
+    # =========================
+    # CAPITAL A FINANCIAR
+    # =========================
+    capital_financiado = precio_total - enganche
 
-    #     mensualidad = round(mensualidad, 2)
+    if descuento > 0:
+        capital_financiado -= descuento
 
-    llenado_cuenta = {"codigo":pk_cuenta, "fecha":fecha_hoy, "saldo":precio_total, "fk_cliente":req["fk_cliente"], "fk_inmueble":req["fkinmueble"], "fk_tipo_cuenta":1, "congelada":0}
+    capital_financiado = round(
+        capital_financiado,
+        2
+    )
+
+    # =========================
+    # VARIABLES
+    # =========================
+    saldo_final = capital_financiado
+    mensualidad = 0
+
+    # =========================
+    # VALIDAR FINANCIAMIENTO
+    # =========================
+    if forma_pago != "C":
+
+        # Validar meses
+        if mensualidades <= 0:
+            return jsonify({
+                "success": False,
+                "message": "El plazo en meses debe ser mayor a 0"
+            }), 400
+
+        # =========================
+        # CON INTERÉS
+        # =========================
+        if interes_anual > 0:
+
+            interes_mensual = (
+                interes_anual / 100
+            ) / 12
+
+            mensualidad = (
+                capital_financiado *
+                (
+                    interes_mensual *
+                    (1 + interes_mensual) ** mensualidades
+                ) /
+                (
+                    ((1 + interes_mensual) ** mensualidades) - 1
+                )
+            )
+
+            mensualidad = round(
+                mensualidad,
+                2
+            )
+
+            # SALDO TOTAL CON INTERESES
+            saldo_final = round(
+                mensualidad * mensualidades,
+                2
+            )
+
+        # =========================
+        # SIN INTERÉS
+        # =========================
+        else:
+
+            mensualidad = round(
+                capital_financiado / mensualidades,
+                2
+            )
+
+            saldo_final = capital_financiado
+
+    # =========================
+    # CONTADO
+    # =========================
+    else:
+
+        saldo_final = capital_financiado
+        mensualidad = 0
+
+    # =========================
+    # CREAR CUENTA
+    # =========================
+    llenado_cuenta = {
+        "codigo": pk_cuenta,
+        "fecha": fecha_hoy,
+
+        # ESTE YA QUEDA CORRECTO
+        "saldo": saldo_final,
+
+        "fk_cliente": req["fk_cliente"],
+        "fk_inmueble": req["fkinmueble"],
+
+        "fk_tipo_cuenta": 1,
+        "congelada": 0
+    }
+
     cuenta = Cuenta(**llenado_cuenta)
     db.session.add(cuenta)
     db.session.commit()
@@ -1385,7 +1703,8 @@ def guardar_cuenta():
     db.session.commit()
     generar_documentos(req, pk_cuenta)
     db.session.execute(text("""update inmueble set fechadeventa='{}' where codigo={}""".format(fecha_hoy, req["fkinmueble"])))   
-    db.session.commit()    
+    db.session.commit()
+    #update_documentos_and_cuenta(pk_cuenta)    
 
     response = jsonify({"status":"good", "data":{"cuenta":pk_cuenta}})
     return response
