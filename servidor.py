@@ -1467,8 +1467,19 @@ def generar_reporte_csv(db, fk_cuenta: int) -> bytes:
 @app.route('/api/estadodecuenta/<int:cuenta_codigo>', methods=['GET'])
 @jwt_required()
 def estado_decuenta(cuenta_codigo):
+    cuenta_existe = Cuenta.query.get(cuenta_codigo)
+    if not cuenta_existe:
+        return jsonify({"error": "La cuenta especificada no existe"}), 404
+
+    # Obtener filtros de fecha opcionales desde los parámetros de la URL (?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD)
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
+
+    # ------------------------------------------
+    # 1. CONSTRUCCIÓN DEL UNION EN SQLALCHEMY
+    # ------------------------------------------
+    
+    # Subquery PARTE 1: Cargos ('C')
     q_cargos = db.session.query(
         Movimiento.codigo.label('movimiento'),
         Documento.fechadevencimiento.label('fecha'),
@@ -1488,7 +1499,7 @@ def estado_decuenta(cuenta_codigo):
         Movimiento.cargoabono == 'C'
     )
 
-    # PARTE 2: Abonos ('A') y Recibos Activos ('A')
+    # Subquery PARTE 2: Abonos ('A') con Recibos Activos ('A')
     q_abonos = db.session.query(
         Movimiento.codigo.label('movimiento'),
         Recibo.fechaemision.label('fecha'),
@@ -1499,7 +1510,7 @@ def estado_decuenta(cuenta_codigo):
         Movimiento.cantidad.label('abono'),
         db.func.coalesce(Movimiento.relaciondepago, '').label('relacionpago'),
         Recibo.referencia.label('referencia'),
-        literal(0.0).label('saldo'),
+        Documento.saldo.label('saldo'),  # Mantiene el saldo del documento en las filas de abono
         Recibo.interesmoratorio.label('interesmoratorio')
     ).join(
         Movimiento, Movimiento.numrecibo == Recibo.codigo
@@ -1511,7 +1522,7 @@ def estado_decuenta(cuenta_codigo):
         Recibo.status == 'A'
     )
 
-    # Aplicar filtros de fecha si vienen en la petición (mapeados al campo 'fecha' de cada subquery)
+    # Aplicar filtros de fecha si fueron enviados en el request
     if fecha_inicio and fecha_fin:
         try:
             f_ini = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
@@ -1521,67 +1532,77 @@ def estado_decuenta(cuenta_codigo):
         except ValueError:
             return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD"}), 400
 
-    # Ejecutar el UNION y ordenar por fecha (Columna index 2 en tu query, aquí por el alias 'fecha')
+    # Ejecutar UNION ordenado por fecha y movimiento secuencial
     query_final = q_cargos.union(q_abonos).order_by('fecha', 'movimiento')
     rows = query_final.all()
 
     if not rows:
-        return jsonify({"message": "No se encontraron registros para esta cuenta"}), 200
+        return jsonify({"message": "No se encontraron movimientos para esta cuenta"}), 200
 
-    # ==========================================
-    # 2. PROCESAMIENTO IGUAL A TU BUCLE ORIGINAL
-    # ==========================================
-    
+    # ------------------------------------------
+    # 2. PRE-PROCESAMIENTO: IDENTIFICAR ÚLTIMO MOVIMIENTO DE CADA RECIBO
+    # ------------------------------------------
+    ultimo_movimiento_por_recibo = {}
+    for row in rows:
+        if row.recibo and int(row.recibo) > 0:
+            # Como la lista viene ordenada ascendentemente, el último ID que se guarde 
+            # de un mismo recibo será efectivamente el movimiento final del bloque.
+            ultimo_movimiento_por_recibo[int(row.recibo)] = row.movimiento
+
+    # ------------------------------------------
+    # 3. PROCESAMIENTO DE FILAS Y LOGICA DE NEGOCIO
+    # ------------------------------------------
     totalcargos, totalabonos, totalsaldo, totalinteres = 0.00, 0.00, 0.00, 0.00
     reporte_data = []
 
     for row in rows:
-        # Lógica de Recibo: %s-%s si recibo > 0
+        # Lógica de construcción del campo Recibo (Id-ConsDesarrollo)
         recibo_str = ''
-        if int(row.recibo) > 0:
-            recibo_str = f"{int(row.recibo)}-{int(row.consdesarrollo)}"
+        recibo_id_int = int(row.recibo) if row.recibo else 0
+        if recibo_id_int > 0:
+            recibo_str = f"{recibo_id_int}-{int(row.consdesarrollo)}"
             
-        # Lógica de Cargo
+        # Procesar Cargo
         cargo_val = ''
         if float(row.cargo) > 0:
             cargo_val = round(float(row.cargo), 2)
             totalcargos += cargo_val
             totalsaldo += cargo_val
 
-        # Lógica de Abono
+        # Procesar Abono
         abono_val = ''
         if float(row.abono) > 0:
             abono_val = round(float(row.abono), 2)
             totalabonos += abono_val
             totalsaldo -= abono_val
             
-        # Lógica de Saldo Documento (Saldodocto se limpia si es un recibo/abono)
-        if recibo_str:
-            saldo_docto = ''
-        else: 
-            saldo_docto = round(float(row.saldo), 2)
+        # Saldo del Documento (fijo y parejo para todos los movimientos del doc)
+        saldo_docto = round(float(row.saldo), 2)
             
-        # Lógica de Interés Moratorio
+        # Lógica de deduplicación del Interés Moratorio por Recibo
         interes_moratorio = ''
         if float(row.interesmoratorio) > 0:
-            interes_moratorio = round(float(row.interesmoratorio), 2)
-            totalinteres += interes_moratorio
-            
-        # Control de flotantes para el saldo acumulado de la cuenta
+            if recibo_id_int > 0 and row.movimiento == ultimo_movimiento_por_recibo.get(recibo_id_int):
+                interes_moratorio = round(float(row.interesmoratorio), 2)
+                totalinteres += interes_moratorio
+            else:
+                interes_moratorio = ''  # Queda vacío en los movimientos anteriores del mismo recibo
+
+        # Ajuste de punto flotante para el balance de la cuenta
         if round(totalsaldo, 2) == 0.00:
             totalsaldo = 0.00
 
-        # Formatear la fecha a DD/MM/YYYY idéntico al convert(varchar, ..., 103)
+        # Formatear la fecha a DD/MM/YYYY
         fecha_formateada = row.fecha.strftime('%d/%m/%Y') if row.fecha else ''
 
-        # Insertar fila procesada al array del reporte
+        # Formatear las variables numéricas agregando comas de miles y forzando dos decimales
         cargo_fmt = f"{cargo_val:,.2f}" if isinstance(cargo_val, (int, float)) else ''
         abono_fmt = f"{abono_val:,.2f}" if isinstance(abono_val, (int, float)) else ''
-        
         saldo_docto_fmt = f"{saldo_docto:,.2f}" if isinstance(saldo_docto, (int, float)) else ''
         saldo_cuenta_fmt = f"{round(totalsaldo, 2):,.2f}"
-        
         interes_fmt = f"{interes_moratorio:,.2f}" if isinstance(interes_moratorio, (int, float)) else ''
+
+        # Añadir al diccionario conservando las columnas exactas
         reporte_data.append({
             "Movimiento": row.movimiento,
             "Fecha": fecha_formateada,
@@ -1595,24 +1616,27 @@ def estado_decuenta(cuenta_codigo):
             "Interes Moratorio": interes_fmt
         })
 
-    # ==========================================
-    # 3. GENERACIÓN DEL CSV Y ENVÍO CON send_file
-    # ==========================================
-    
-    # Columnas exactamente en el orden solicitado
+    # ------------------------------------------
+    # 4. CONVERSIÓN A CSV Y RETORNO VÍA SEND_FILE
+    # ------------------------------------------
     columnas_finales = [
         "Movimiento", "Fecha", "Documento", "Recibo", "Relación",
         "Cargo", "Abono", "Saldo Documento", "Saldo de la Cuenta", "Interes Moratorio"
     ]
     
+    # Creamos el DataFrame con el orden explícito de tus columnas
     df = pd.DataFrame(reporte_data, columns=columnas_finales)
 
-    # Guardar en buffer binario de memoria
+    # Creamos un stream binario en memoria
     output = io.BytesIO()
-    # Usamos utf-8-sig para heredar bien el acento de "Relación" en Excel
+    
+    # exportamos usando utf-8-sig para heredar la codificación del BOM y que Excel lea el acento de "Relación"
     df.to_csv(output, index=False, encoding='utf-8-sig')
+    
+    # Rebobinar el puntero del archivo al byte 0 para que Flask lo lea completo
     output.seek(0)
 
+    # Generar el nombre de archivo dinámico
     filename = f"reporte_cuenta_{cuenta_codigo}_{datetime.now().strftime('%Y%m%d')}.csv"
 
     return send_file(
