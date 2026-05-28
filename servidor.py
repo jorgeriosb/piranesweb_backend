@@ -29,6 +29,9 @@ import calendar
 from functools import reduce
 from dateutil.relativedelta import relativedelta
 from ajuste_cuenta import update_documentos_and_cuenta
+import pandas as pd
+from sqlalchemy import literal, or_
+
 
 
 
@@ -1330,10 +1333,314 @@ def genera_contrato():
         as_attachment=True,
         download_name='contrato.pdf'
     )
+def _fmt(value, empty_zero: bool = True) -> str:
+    """Format a float for the CSV: comma-thousands, 2 decimals.
+    Returns empty string when value is 0 and empty_zero is True."""
+    if value is None:
+        return ""
+    if empty_zero and value == 0.0:
+        return ""
+    return f"{value:,.2f}"
+ 
+ 
+def _recibo_label(numrecibo) -> str:
+    """
+    numrecibo is stored as an integer but displayed as 'NNNNN-MMMMM'.
+    The split point is ambiguous from the integer alone, so we replicate
+    the pattern seen in the sample: the raw value already encodes both
+    halves separated by a hyphen in the source system.
+ 
+    If your DB stores it as a plain integer you will need to join to the
+    Recibo table and use recibo.referencia or a similar field instead.
+    For now we format it as-is; replace this function if your schema
+    stores it differently.
+    """
+    if numrecibo is None:
+        return ""
+    return str(numrecibo)  # swap with recibo.referencia if needed
 
-@app.route('/api/estadodecuenta/<int:cuenta_id>', methods=['GET'])
+def generar_reporte_csv(db, fk_cuenta: int) -> bytes:
+    """
+    Build the estado-de-cuenta CSV for *fk_cuenta* and return it as bytes.
+ 
+    Columns
+    -------
+    Movimiento | Fecha | Documento | Recibo | Relación |
+    Cargo | Abono | Saldo Documento | Saldo de la Cuenta | Interés Moratorio
+    """
+ 
+    # 1. Validate the account exists
+    cuenta = db.session.get(Cuenta, fk_cuenta)
+    if cuenta is None:
+        raise ValueError(f"Cuenta {fk_cuenta} not found.")
+ 
+    # 2. Fetch all documents that belong to this account
+    documentos = db.session.execute(
+        db.select(Documento).filter_by(fk_cuenta=fk_cuenta)
+    ).scalars().all()
+    if not documentos:
+        raise ValueError(f"No documents found for Cuenta {fk_cuenta}.")
+ 
+    doc_ids = [d.codigo for d in documentos]
+ 
+    # 3. Fetch all movements for those documents, sorted by movimiento PK
+    movimientos = db.session.execute(
+        db.select(Movimiento)
+        .filter(Movimiento.fk_documento.in_(doc_ids))
+        .order_by(Movimiento.codigo.asc())
+    ).scalars().all()
+ 
+    # 4. Build a lookup: recibo codigo → Recibo row (for interés moratorio)
+    #    We only fetch recibos that are actually referenced.
+    recibo_ids = {
+        m.numrecibo for m in movimientos if m.numrecibo is not None
+    }
+    recibo_map: dict[int, Recibo] = {}
+    if recibo_ids:
+        recibos = db.session.execute(
+            db.select(Recibo).filter(Recibo.codigo.in_(recibo_ids))
+        ).scalars().all()
+        recibo_map = {r.codigo: r for r in recibos}
+ 
+    # 5. Running balances
+    #    saldo_doc  tracks balance per Documento codigo
+    #    saldo_cta  is a single running total across the whole account
+    saldo_doc: dict[int, float] = defaultdict(float)
+    saldo_cta: float = 0.0
+ 
+    # 6. Build rows
+    rows = []
+    for mov in movimientos:
+        is_cargo = mov.cargoabono.upper() == "C"
+        cantidad = round(mov.cantidad, 2)
+ 
+        cargo_val = cantidad if is_cargo else 0.0
+        abono_val = cantidad if not is_cargo else 0.0
+ 
+        # Update document-level balance
+        saldo_doc[mov.fk_documento] += cargo_val - abono_val
+        saldo_doc[mov.fk_documento] = round(saldo_doc[mov.fk_documento], 2)
+ 
+        # Update account-level balance
+        saldo_cta += cargo_val - abono_val
+        saldo_cta = round(saldo_cta, 2)
+ 
+        # Interés moratorio from the linked recibo (if any)
+        interes = ""
+        if mov.numrecibo is not None:
+            recibo = recibo_map.get(mov.numrecibo)
+            if recibo and recibo.interesmoratorio and recibo.interesmoratorio != 0:
+                interes = _fmt(recibo.interesmoratorio, empty_zero=True)
+ 
+        rows.append({
+            "Movimiento":        mov.codigo,
+            "Fecha":             mov.fecha.strftime("%d/%m/%Y") if mov.fecha else "",
+            "Documento":         mov.fk_documento,
+            "Recibo":            _recibo_label(mov.numrecibo),
+            "Relación":          mov.relaciondepago or "",
+            "Cargo":             _fmt(cargo_val),
+            "Abono":             _fmt(abono_val),
+            "Saldo Documento":   _fmt(saldo_doc[mov.fk_documento]),
+            "Saldo de la Cuenta": _fmt(saldo_cta),
+            "Interés Moratorio": interes,
+        })
+ 
+    # 7. Write CSV to an in-memory buffer
+    output = io.StringIO()
+    fieldnames = [
+        "Movimiento", "Fecha", "Documento", "Recibo", "Relación",
+        "Cargo", "Abono", "Saldo Documento", "Saldo de la Cuenta",
+        "Interés Moratorio",
+    ]
+    writer = csv.DictWriter(
+        output,
+        fieldnames=fieldnames,
+        delimiter=",",
+        lineterminator="\r\n",
+        quoting=csv.QUOTE_MINIMAL,
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+ 
+    return output.getvalue().encode("utf-8-sig")  # utf-8-sig adds BOM for Excel
+
+@app.route('/api/estadodecuenta/<int:cuenta_codigo>', methods=['GET'])
 @jwt_required()
-def estado_decuenta(cuenta_id):
+def estado_decuenta(cuenta_codigo):
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    q_cargos = db.session.query(
+        Movimiento.codigo.label('movimiento'),
+        Documento.fechadevencimiento.label('fecha'),
+        Documento.codigo.label('documento'),
+        literal(0).label('recibo'),
+        literal(0).label('consdesarrollo'),
+        Movimiento.cantidad.label('cargo'),
+        literal(0.0).label('abono'),
+        db.func.coalesce(Movimiento.relaciondepago, '').label('relacionpago'),
+        literal('').label('referencia'),
+        Documento.saldo.label('saldo'),
+        literal(0.0).label('interesmoratorio')
+    ).join(
+        Movimiento, Movimiento.fk_documento == Documento.codigo
+    ).filter(
+        Documento.fk_cuenta == cuenta_codigo,
+        Movimiento.cargoabono == 'C'
+    )
+
+    # PARTE 2: Abonos ('A') y Recibos Activos ('A')
+    q_abonos = db.session.query(
+        Movimiento.codigo.label('movimiento'),
+        Recibo.fechaemision.label('fecha'),
+        Documento.codigo.label('documento'),
+        Recibo.codigo.label('recibo'),
+        Recibo.consdesarrollo.label('consdesarrollo'),
+        literal(0.0).label('cargo'),
+        Movimiento.cantidad.label('abono'),
+        db.func.coalesce(Movimiento.relaciondepago, '').label('relacionpago'),
+        Recibo.referencia.label('referencia'),
+        literal(0.0).label('saldo'),
+        Recibo.interesmoratorio.label('interesmoratorio')
+    ).join(
+        Movimiento, Movimiento.numrecibo == Recibo.codigo
+    ).join(
+        Documento, Documento.codigo == Movimiento.fk_documento
+    ).filter(
+        Documento.fk_cuenta == cuenta_codigo,
+        Movimiento.cargoabono == 'A',
+        Recibo.status == 'A'
+    )
+
+    # Aplicar filtros de fecha si vienen en la petición (mapeados al campo 'fecha' de cada subquery)
+    if fecha_inicio and fecha_fin:
+        try:
+            f_ini = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            f_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            q_cargos = q_cargos.filter(Documento.fechadevencimiento.between(f_ini, f_fin))
+            q_abonos = q_abonos.filter(Recibo.fechaemision.between(f_ini, f_fin))
+        except ValueError:
+            return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD"}), 400
+
+    # Ejecutar el UNION y ordenar por fecha (Columna index 2 en tu query, aquí por el alias 'fecha')
+    query_final = q_cargos.union(q_abonos).order_by('fecha', 'movimiento')
+    rows = query_final.all()
+
+    if not rows:
+        return jsonify({"message": "No se encontraron registros para esta cuenta"}), 200
+
+    # ==========================================
+    # 2. PROCESAMIENTO IGUAL A TU BUCLE ORIGINAL
+    # ==========================================
+    
+    totalcargos, totalabonos, totalsaldo, totalinteres = 0.00, 0.00, 0.00, 0.00
+    reporte_data = []
+
+    for row in rows:
+        # Lógica de Recibo: %s-%s si recibo > 0
+        recibo_str = ''
+        if int(row.recibo) > 0:
+            recibo_str = f"{int(row.recibo)}-{int(row.consdesarrollo)}"
+            
+        # Lógica de Cargo
+        cargo_val = ''
+        if float(row.cargo) > 0:
+            cargo_val = round(float(row.cargo), 2)
+            totalcargos += cargo_val
+            totalsaldo += cargo_val
+
+        # Lógica de Abono
+        abono_val = ''
+        if float(row.abono) > 0:
+            abono_val = round(float(row.abono), 2)
+            totalabonos += abono_val
+            totalsaldo -= abono_val
+            
+        # Lógica de Saldo Documento (Saldodocto se limpia si es un recibo/abono)
+        if recibo_str:
+            saldo_docto = ''
+        else: 
+            saldo_docto = round(float(row.saldo), 2)
+            
+        # Lógica de Interés Moratorio
+        interes_moratorio = ''
+        if float(row.interesmoratorio) > 0:
+            interes_moratorio = round(float(row.interesmoratorio), 2)
+            totalinteres += interes_moratorio
+            
+        # Control de flotantes para el saldo acumulado de la cuenta
+        if round(totalsaldo, 2) == 0.00:
+            totalsaldo = 0.00
+
+        # Formatear la fecha a DD/MM/YYYY idéntico al convert(varchar, ..., 103)
+        fecha_formateada = row.fecha.strftime('%d/%m/%Y') if row.fecha else ''
+
+        # Insertar fila procesada al array del reporte
+        cargo_fmt = f"{cargo_val:,.2f}" if isinstance(cargo_val, (int, float)) else ''
+        abono_fmt = f"{abono_val:,.2f}" if isinstance(abono_val, (int, float)) else ''
+        
+        saldo_docto_fmt = f"{saldo_docto:,.2f}" if isinstance(saldo_docto, (int, float)) else ''
+        saldo_cuenta_fmt = f"{round(totalsaldo, 2):,.2f}"
+        
+        interes_fmt = f"{interes_moratorio:,.2f}" if isinstance(interes_moratorio, (int, float)) else ''
+        reporte_data.append({
+            "Movimiento": row.movimiento,
+            "Fecha": fecha_formateada,
+            "Documento": row.documento,
+            "Recibo": recibo_str,
+            "Relación": row.relacionpago,
+            "Cargo": cargo_fmt,
+            "Abono": abono_fmt,
+            "Saldo Documento": saldo_docto_fmt,
+            "Saldo de la Cuenta": saldo_cuenta_fmt,
+            "Interes Moratorio": interes_fmt
+        })
+
+    # ==========================================
+    # 3. GENERACIÓN DEL CSV Y ENVÍO CON send_file
+    # ==========================================
+    
+    # Columnas exactamente en el orden solicitado
+    columnas_finales = [
+        "Movimiento", "Fecha", "Documento", "Recibo", "Relación",
+        "Cargo", "Abono", "Saldo Documento", "Saldo de la Cuenta", "Interes Moratorio"
+    ]
+    
+    df = pd.DataFrame(reporte_data, columns=columnas_finales)
+
+    # Guardar en buffer binario de memoria
+    output = io.BytesIO()
+    # Usamos utf-8-sig para heredar bien el acento de "Relación" en Excel
+    df.to_csv(output, index=False, encoding='utf-8-sig')
+    output.seek(0)
+
+    filename = f"reporte_cuenta_{cuenta_codigo}_{datetime.now().strftime('%Y%m%d')}.csv"
+
+    return send_file(
+        output,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=filename
+    )
+
+@app.route('/api/estadodecuenta3/<int:cuenta_id>', methods=['GET'])
+@jwt_required()
+def estado_decuenta3(cuenta_id):
+    try:
+            csv_bytes = generar_reporte_csv(db, fk_cuenta=cuenta_id)
+    except ValueError as exc:
+        abort(404, description=str(exc))
+
+    buffer = io.BytesIO(csv_bytes)
+    return send_file(
+        buffer,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"estado_cuenta_{cuenta_id}.csv",
+    )
+
+@app.route('/api/estadodecuenta2/<int:cuenta_id>', methods=['GET'])
+@jwt_required()
+def estado_decuenta2(cuenta_id):
     #req= request.get_json()
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
     cuenta = Cuenta.query.filter_by(codigo=cuenta_id).first()
