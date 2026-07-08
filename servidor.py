@@ -668,10 +668,11 @@ def update_inmueble_precio():
     id = req["inmueble"]
     precioxm2 = req["precio"]
     print("id ", id, " precioxm2 ", precioxm2)
+    superficie = req["superficie"]
     inmueble = Inmueble.query.get(id)
     if not inmueble:
         return jsonify({"status":"error", "message":"no se encontro inmueble"})
-    result = db.session.execute(text(f"""update inmueble set preciopormetro={precioxm2}, precio=({precioxm2}*superficie)  where codigo={id}"""))
+    result = db.session.execute(text(f"""update inmueble set preciopormetro={float(precioxm2)}, precio=Round(({float(precioxm2)}*{float(superficie)})::numeric, 2), superficie={float(superficie)}  where codigo={id}"""))
     db.session.commit()
     return jsonify({"status":"good", "message":"precio actualizado"})
 
@@ -1399,6 +1400,8 @@ def genera_contrato():
     }
     # Generate PDF in memory
     #pdf_bytes = pdfkit.from_string(html_content, False)  # False = return as bytes
+    if req["fk_etapa"] == 33:
+        rendered = render_template('contratoetapa5.html', **context)
     if req["fk_etapa"] == 34:
         rendered = render_template('contratoetapa5.html', **context)
     if req["fk_etapa"] == 35:
