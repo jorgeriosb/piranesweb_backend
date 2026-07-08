@@ -2327,14 +2327,6 @@ def get_cuentas_vencidas():
             Documento.fechadevencimiento < func.current_date(),
             Inmueble.fk_etapa.in_([8,9,10,33,34,35]),
             Cuenta.saldo > 0,
-
-            # 🔥 ESTE ES EL FIX
-            ~Cuenta.codigo.in_(
-                db.session.query(Documento.fk_cuenta).filter(
-                    Documento.saldo > 0,
-                    Documento.fechadevencimiento >= func.current_date()
-                )
-            )
         )
         .group_by(Cuenta.codigo)
     ).subquery()
