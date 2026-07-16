@@ -1304,7 +1304,7 @@ def genera_contrato():
         "precio_total": precio_total_financiado,
 
         "precio_total_letras":
-            numero_a_letras_mxn(precio_total_financiado),
+            numero_a_letras_mxn(precio_total_financiado-descuento),
 
         "anticipo": anticipo,
 
