@@ -116,6 +116,5 @@ if __name__ == "__main__":
     #     2860, 2872, 2879, 2881, 2890, 2899, 2915, 2977, 2981, 2982,
     #     2988, 2992, 3005,
     # ]
-    #for cuenta_codigo in numeros: 
->>>>>>> 2a16159cac68f6d70a222b38716b734c2580fd23
+    #for cuenta_codigo in numeros:
     update_documentos_and_cuenta(cuenta_codigo)
