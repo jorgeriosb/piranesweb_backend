@@ -33,6 +33,8 @@ import pandas as pd
 from sqlalchemy import literal, or_
 import psycopg2
 import os
+from sqlalchemy import exists
+
 
 
 
@@ -524,10 +526,32 @@ def protected():
 @app.route('/api/clientescuenta', methods=['GET'])
 @jwt_required()
 def get_clientescuenta():
-    result = db.session.execute(text("""SELECT distinct(cc.codigo) as cuenta, c.codigo as cliente, 
-            c.nombre, c.rfc, cc.saldo, i.iden1, i.iden2 
-            FROM cuenta cc join cliente c on c.codigo=cc.fk_cliente 
-            join inmueble i on cc.fk_inmueble=i.codigo  where i.fk_etapa in (8,9,10,33,34,35) order by 1"""))
+    result = db.session.execute(text("""SELECT DISTINCT
+    cc.codigo AS cuenta,
+    c.codigo AS cliente,
+    c.nombre,
+    c.rfc,
+    COALESCE(mov.saldo_calculado, 0) AS saldo,
+    i.iden1,
+    i.iden2
+FROM cuenta cc
+JOIN cliente c ON c.codigo = cc.fk_cliente
+JOIN inmueble i ON cc.fk_inmueble = i.codigo
+LEFT JOIN (
+    SELECT
+        d.fk_cuenta,
+        SUM(
+            CASE WHEN m.cargoabono = 'C' THEN m.cantidad ELSE 0 END
+        ) -
+        SUM(
+            CASE WHEN m.cargoabono = 'A' THEN m.cantidad ELSE 0 END
+        ) AS saldo_calculado
+    FROM movimiento m
+    JOIN documento d ON m.fk_documento = d.codigo
+    GROUP BY d.fk_cuenta
+) mov ON mov.fk_cuenta = cc.codigo
+WHERE i.fk_etapa IN (8, 9, 10, 33, 34, 35)
+ORDER BY 1"""))
     clientes = result.fetchall()
 
     # Convert list of tuples to a list of dictionaries
@@ -2299,22 +2323,6 @@ def get_saldos():
 @app.route('/api/cuentas_vencidas')
 @jwt_required()
 def get_cuentas_vencidas():
-    
-    # subquery = (
-    #     db.session.query(
-    #         Cuenta.codigo.label("cuenta_id"),
-    #         func.min(Documento.fechadevencimiento).label("fecha_mas_antigua")
-    #     )
-    #     .join(Documento, Documento.fk_cuenta == Cuenta.codigo)
-    #     .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
-    #     .filter(
-    #         Documento.saldo > 0,
-    #         Documento.fechadevencimiento < func.current_date(),
-    #         Inmueble.fk_etapa.in_([8,9,10,33,34,35]),
-    #         Cuenta.saldo>0
-    #     )
-    #     .group_by(Cuenta.codigo)
-    # ).subquery()
     subquery = (
         db.session.query(
             Cuenta.codigo.label("cuenta_id"),
@@ -2333,29 +2341,31 @@ def get_cuentas_vencidas():
 
     cuentas_al_corriente = (
         db.session.query(
-           Cuenta.codigo.label("cuenta"),
+            Cuenta.codigo.label("cuenta"),
             Cliente.nombre.label("cliente"),
             (func.current_date() - subquery.c.fecha_mas_antigua).label("dias_vencido"),
             Cuenta.saldo.label("saldo"),
             Inmueble.iden2.label("iden2"),
             Inmueble.iden1.label("iden1"),
         )
-        .join(Documento, Documento.fk_cuenta == Cuenta.codigo)
         .join(Cliente, Cuenta.fk_cliente == Cliente.codigo)
         .join(Inmueble, Cuenta.fk_inmueble == Inmueble.codigo)
         .filter(
-            Documento.saldo > 0,
-            Documento.fechadevencimiento >= func.current_date(),
             Inmueble.fk_etapa.in_([8, 9, 10, 33, 34, 35]),
+            Cuenta.saldo > 0,
+            # must have at least one pending (unpaid) document
+            exists().where(
+                (Documento.fk_cuenta == Cuenta.codigo)
+                & (Documento.saldo > 0)
+            ),
+            # but none of them overdue
+            ~exists().where(
+                (Documento.fk_cuenta == Cuenta.codigo)
+                & (Documento.saldo > 0)
+                & (Documento.fechadevencimiento < func.current_date())
+            ),
         )
-        .group_by(
-            Cuenta.codigo,
-            Cliente.nombre,
-            Inmueble.iden2,
-            Inmueble.iden1,
-            subquery.c.fecha_mas_antigua,
-            Cuenta.saldo
-        )
+        .distinct(Cuenta.codigo)
         .all()
     )
 

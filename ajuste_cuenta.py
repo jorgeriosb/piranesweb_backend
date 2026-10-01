@@ -108,5 +108,13 @@ def update_documentos_and_cuenta(cuenta_codigo):
 
 # Example usage jejeje 
 if __name__ == "__main__":
-    cuenta_codigo = 2907  # Replace with the actual cuenta code
+    cuenta_codigo = 2253  # Replace with the actual cuenta code
+    # numeros = [
+    #     2253, 2475, 2535, 2546, 2663, 2664, 2668, 2670, 2671, 2675,
+    #     2691, 2692, 2695, 2699, 2702, 2705, 2708, 2717, 2718, 2721,
+    #     2749, 2757, 2759, 2778, 2800, 2812, 2831, 2840, 2850, 2854,
+    #     2860, 2872, 2879, 2881, 2890, 2899, 2915, 2977, 2981, 2982,
+    #     2988, 2992, 3005,
+    # ]
+    #for cuenta_codigo in numeros: 
     update_documentos_and_cuenta(cuenta_codigo)
